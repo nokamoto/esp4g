@@ -13,7 +13,8 @@ import (
 
 var (
 	pb = flag.String("descriptor", "descriptor.pb", "FileDescriptorSet protocol buffer file")
-	port = flag.Int("p", 9000, "The gRPC proxy server port")
+	port = flag.Int("p", 9000, "The gRPC server port")
+	proxy = flag.Int("proxy", 8000, "The gRPC proxy port")
 )
 
 func main() {
@@ -40,7 +41,7 @@ func main() {
 	opts := []grpc.ServerOption{}
 	server := grpc.NewServer(opts...)
 
-	proxy, err := NewProxyServer(*port)
+	proxy, err := NewProxyServer(*proxy)
 	if err != nil {
 		log.Fatal(err)
 	}

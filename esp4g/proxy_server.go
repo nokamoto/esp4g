@@ -3,20 +3,23 @@ package main
 import (
 	"google.golang.org/grpc"
 	"fmt"
-	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/codes"
+	"golang.org/x/net/context"
+	"log"
 )
 
 type ProxyServer interface {
-	Proxy() (interface{}, error)
+	Proxy(ctx context.Context, method string, req *ProxyMessage) (interface{}, error)
 }
 
 type proxyServer struct {
 	con *grpc.ClientConn
 }
 
-func (*proxyServer)Proxy() (interface{}, error) {
-	return nil, status.Error(codes.Unimplemented, "not implemented yet")
+func (p *proxyServer)Proxy(ctx context.Context, method string, req *ProxyMessage) (interface{}, error) {
+	log.Printf("%s", method)
+	out := NewProxyMessage()
+	err := grpc.Invoke(ctx, method, req, out, p.con)
+	return out, err
 }
 
 func NewProxyServer(port int) (*proxyServer, error) {
