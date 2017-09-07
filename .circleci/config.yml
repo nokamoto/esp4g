@@ -1,0 +1,13 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.8
+    working_directory: /go/src/github.com/nokamoto/esp4g
+    steps:
+      - checkout
+      - run: curl -L https://github.com/google/protobuf/releases/download/v3.3.0/protoc-3.3.0-linux-x86_64.zip -o /tmp/protoc.zip
+      - run: unzip /tmp/protoc.zip -d $HOME/protoc
+      - run: echo 'export PATH=$HOME/protoc/bin:$PATH' >> $BASH_ENV
+      - run: make
+      - run: git diff --exit-code
