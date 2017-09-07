@@ -10,13 +10,13 @@ import (
 
 func createProxyHandler(method string) func(interface{}, context.Context, func(interface{}) error, grpc.UnaryServerInterceptor) (interface{}, error) {
 	return func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-		in := new(ProxyMessage)
+		in := NewProxyMessage()
 		if err := dec(in); err != nil {
 			return nil, err
 		}
 
 		if interceptor == nil {
-			return srv.(ProxyServer).Proxy()
+			return srv.(ProxyServer).Proxy(ctx, method, in)
 		}
 
 		info := &grpc.UnaryServerInfo{
@@ -25,7 +25,7 @@ func createProxyHandler(method string) func(interface{}, context.Context, func(i
 		}
 
 		handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.(ProxyServer).Proxy()
+			return srv.(ProxyServer).Proxy(ctx, method, in)
 		}
 
 		return interceptor(ctx, in, info, handler)
