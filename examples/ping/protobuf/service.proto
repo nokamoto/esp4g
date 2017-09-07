@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package eps4g.ping;
+
+message Ping {
+  int64 x = 1;
+}
+
+message Pong {
+  int64 y = 1;
+}
+
+service PingService {
+  rpc Send(Ping) returns (Pong) {}
+
+  rpc Unavailable(Ping) returns (Pong) {}
+}
