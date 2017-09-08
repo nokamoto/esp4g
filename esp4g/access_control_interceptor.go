@@ -30,7 +30,10 @@ func NewAccessControlInterceptor(port *int) *accessControlInterceptor {
 
 func (a *accessControlInterceptor)doAccessControl(method string, keys []string) (extension.AccessPolicy, error) {
 	client := extension.NewAccessControlServiceClient(a.con)
-	id := extension.AccessIdentity{}
+	id := extension.AccessIdentity{
+		Method: method,
+		ApiKey: keys,
+	}
 	ctl, err := client.Access(context.Background(), &id)
 	if err != nil {
 		return extension.AccessPolicy_DENY, err

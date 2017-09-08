@@ -7,15 +7,26 @@ import (
 	"time"
 	calc "github.com/nokamoto/esp4g/examples/calc/protobuf"
 	"google.golang.org/grpc"
-	"context"
 	"io"
+	"golang.org/x/net/context"
 )
 
 var (
 	host = flag.String("h", "localhost", "The gRPC server host")
 	port = flag.Int("p", 9000, "The gRPC server port")
 	interval = flag.Int("n", 1, "Wait n seconds")
+	apikey = flag.String("k", "guest", "The gRPC request 'x-api-key'")
 )
+
+type PerRPCCredentials struct {}
+
+func (PerRPCCredentials)GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
+	return map[string]string{"x-api-key": *apikey}, nil
+}
+
+func (PerRPCCredentials)RequireTransportSecurity() bool {
+	return false
+}
 
 func clientSideStreaming(client calc.CalcServiceClient, count int64) {
 	fmt.Print("client side: ")
@@ -122,7 +133,7 @@ func bidirectionalStreaming(client calc.CalcServiceClient, count int64) {
 func main() {
 	flag.Parse()
 
-	opts := []grpc.DialOption{grpc.WithInsecure()}
+	opts := []grpc.DialOption{grpc.WithInsecure(), grpc.WithPerRPCCredentials(PerRPCCredentials{})}
 
 	con, err := grpc.Dial(fmt.Sprintf("%s:%d", *host, *port), opts...)
 	if err != nil {
