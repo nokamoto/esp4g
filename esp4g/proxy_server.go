@@ -12,6 +12,8 @@ type ProxyServer interface {
 	Proxy(ctx context.Context, method string, req *ProxyMessage) (interface{}, error)
 
 	ProxyClientSideStreaming(method string, stream *clientSideServerStream, desc *grpc.StreamDesc) error
+
+	ProxyServerSideStreaming(method string, req *ProxyMessage, stream *serverSideServerStream, desc *grpc.StreamDesc) error
 }
 
 type proxyServer struct {
@@ -49,6 +51,38 @@ func (p *proxyServer)ProxyClientSideStreaming(method string, stream *clientSideS
 			return err
 		}
 		if err = proxy.Send(m); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *proxyServer)ProxyServerSideStreaming(method string, req *ProxyMessage, stream *serverSideServerStream, desc *grpc.StreamDesc) error {
+	log.Printf("%s", method)
+
+	cs, err := grpc.NewClientStream(context.Background(), desc, p.con, method)
+	if err != nil {
+		return err
+	}
+
+	proxy := serverSideClientStream{cs}
+	if err = proxy.ClientStream.SendMsg(req); err != nil {
+		return err
+	}
+	if err = proxy.ClientStream.CloseSend(); err != nil {
+		return err
+	}
+
+	for {
+		m, err := proxy.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		if err = stream.Send(m); err != nil {
 			return err
 		}
 	}
