@@ -9,6 +9,8 @@ import (
 	"google.golang.org/grpc"
 	"fmt"
 	"net"
+	"time"
+	"google.golang.org/grpc/codes"
 )
 
 var (
@@ -16,6 +18,14 @@ var (
 	port = flag.Int("p", 9000, "The gRPC server port")
 	proxy = flag.Int("proxy", 8000, "The gRPC proxy port")
 )
+
+func doAccessLog(method string, responseTime time.Duration, stat codes.Code, in int, out int) {
+	fmt.Println(method, responseTime, stat, in, out)
+}
+
+func doStreamAccessLog(method string, responseTime time.Duration, stat codes.Code) {
+	fmt.Println(method, responseTime, stat)
+}
 
 func main() {
 	flag.Parse()
@@ -38,7 +48,10 @@ func main() {
 		log.Printf("listen %v port", *port)
 	}
 
-	opts := []grpc.ServerOption{}
+	opts := []grpc.ServerOption{
+		grpc.UnaryInterceptor(createAccessLogInterceptor(doAccessLog)),
+		grpc.StreamInterceptor(createStreamAccessLogInterceptor(doStreamAccessLog)),
+	}
 	server := grpc.NewServer(opts...)
 
 	proxy, err := NewProxyServer(*proxy)
