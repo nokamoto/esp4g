@@ -32,9 +32,19 @@ func createProxyHandler(method string) func(interface{}, context.Context, func(i
 	}
 }
 
-func createProxyClientSideStreamingHandler(method string, desc *grpc.StreamDesc) func(interface{}, grpc.ServerStream) error {
+func createClientSideStreamingProxyHandler(method string, desc *grpc.StreamDesc) func(interface{}, grpc.ServerStream) error {
 	return func(srv interface{}, stream grpc.ServerStream) error {
 		return srv.(ProxyServer).ProxyClientSideStreaming(method, &clientSideServerStream{stream}, desc)
+	}
+}
+
+func createServerSideStreamingProxyHandler(method string, desc *grpc.StreamDesc) func(interface{}, grpc.ServerStream) error {
+	return func(srv interface{}, stream grpc.ServerStream) error {
+		m := new(ProxyMessage)
+		if err := stream.RecvMsg(m); err != nil {
+			return err
+		}
+		return srv.(ProxyServer).ProxyServerSideStreaming(method, m, &serverSideServerStream{stream}, desc)
 	}
 }
 
@@ -69,9 +79,9 @@ func createServiceDesc(file *descriptor.FileDescriptorProto, service *descriptor
 			if cs && ss {
 
 			} else if cs {
-				streams[last].Handler = createProxyClientSideStreamingHandler(methodName, &streams[last])
+				streams[last].Handler = createClientSideStreamingProxyHandler(methodName, &streams[last])
 			} else if ss {
-
+				streams[last].Handler = createServerSideStreamingProxyHandler(methodName, &streams[last])
 			}
 		} else {
 			handler := createProxyHandler(methodName)
