@@ -138,7 +138,7 @@ func main() {
 	for count >= 0 {
 		clientSideStreaming(client, count)
 		serverSideStreaming(client, count)
-		//bidirectionalStreaming(client, count)
+		bidirectionalStreaming(client, count)
 
 		time.Sleep(time.Duration(*interval) * time.Second)
 
