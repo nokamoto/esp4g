@@ -1,8 +1,8 @@
-package main
+package extension
 
 import (
 	"golang.org/x/net/context"
-	extension "github.com/nokamoto/esp4g/protobuf"
+	proto "github.com/nokamoto/esp4g/protobuf"
 	"github.com/golang/protobuf/ptypes/empty"
 	"go.uber.org/zap"
 	"log"
@@ -18,7 +18,7 @@ func convert(d *duration.Duration) time.Duration {
 	return time.Duration(d.Seconds) * time.Second + time.Duration(d.Nanos)
 }
 
-func (a *accessLogService)UnaryAccess(_ context.Context, unary *extension.UnaryAccessLog) (*empty.Empty, error) {
+func (a *accessLogService)UnaryAccess(_ context.Context, unary *proto.UnaryAccessLog) (*empty.Empty, error) {
 	a.logger.Infow("unary",
 		"method", unary.GetMethod(),
 		"status", unary.GetStatus(),
@@ -29,7 +29,7 @@ func (a *accessLogService)UnaryAccess(_ context.Context, unary *extension.UnaryA
 	return &empty.Empty{}, nil
 }
 
-func (a *accessLogService)StreamAccess(_ context.Context, stream *extension.StreamAccessLog) (*empty.Empty, error) {
+func (a *accessLogService)StreamAccess(_ context.Context, stream *proto.StreamAccessLog) (*empty.Empty, error) {
 	a.logger.Infow("stream",
 		"method", stream.GetMethod(),
 		"status", stream.GetStatus(),

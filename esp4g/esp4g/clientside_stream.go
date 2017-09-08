@@ -1,4 +1,4 @@
-package main
+package esp4g
 
 import "google.golang.org/grpc"
 

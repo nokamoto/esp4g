@@ -1,4 +1,4 @@
-package main
+package esp4g
 
 import (
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"

@@ -1,4 +1,4 @@
-package main
+package extension
 
 type Rule struct {
 	Selector string `yaml:"selector"`
