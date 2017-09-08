@@ -27,6 +27,10 @@ func doStreamAccessLog(method string, responseTime time.Duration, stat codes.Cod
 	fmt.Println(method, responseTime, stat)
 }
 
+func doAccessControl(method string, keys []string) Policy {
+	return ALLOW
+}
+
 func main() {
 	flag.Parse()
 
@@ -49,8 +53,8 @@ func main() {
 	}
 
 	opts := []grpc.ServerOption{
-		grpc.UnaryInterceptor(createAccessLogInterceptor(doAccessLog)),
-		grpc.StreamInterceptor(createStreamAccessLogInterceptor(doStreamAccessLog)),
+		grpc.UnaryInterceptor(*createAccessLogInterceptor(doAccessLog, createApiKeyInterceptor(doAccessControl, nil))),
+		grpc.StreamInterceptor(*createStreamAccessLogInterceptor(doStreamAccessLog, createStreamApiKeyInterceptor(doAccessControl, nil))),
 	}
 	server := grpc.NewServer(opts...)
 
