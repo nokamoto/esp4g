@@ -8,11 +8,18 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-func createAccessLogInterceptor(log func(string, time.Duration, codes.Code, int, int)) grpc.UnaryServerInterceptor {
+func createAccessLogInterceptor(log func(string, time.Duration, codes.Code, int, int), next *grpc.UnaryServerInterceptor) *grpc.UnaryServerInterceptor {
 	f := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		start := time.Now()
 
-		res, err := handler(ctx, req)
+		var res interface{}
+		var err error
+
+		if next != nil {
+			res, err = (*next)(ctx, req, info, handler)
+		} else {
+			res, err = handler(ctx, req)
+		}
 
 		elapsed := time.Since(start)
 
@@ -34,14 +41,22 @@ func createAccessLogInterceptor(log func(string, time.Duration, codes.Code, int,
 
 		return res, err
 	}
-	return grpc.UnaryServerInterceptor(f)
+
+	i := grpc.UnaryServerInterceptor(f)
+
+	return &i
 }
 
-func createStreamAccessLogInterceptor(log func(string, time.Duration, codes.Code)) grpc.StreamServerInterceptor {
+func createStreamAccessLogInterceptor(log func(string, time.Duration, codes.Code), next *grpc.StreamServerInterceptor) *grpc.StreamServerInterceptor {
 	f := func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		start := time.Now()
 
-		err := handler(srv, ss)
+		var err error
+		if next != nil {
+			err = (*next)(srv, ss, info, handler)
+		} else {
+			err = handler(srv, ss)
+		}
 
 		elapsed := time.Since(start)
 
@@ -54,5 +69,8 @@ func createStreamAccessLogInterceptor(log func(string, time.Duration, codes.Code
 
 		return err
 	}
-	return grpc.StreamServerInterceptor(f)
+
+	i := grpc.StreamServerInterceptor(f)
+
+	return &i
 }
