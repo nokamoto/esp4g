@@ -9,27 +9,15 @@ import (
 	"google.golang.org/grpc"
 	"fmt"
 	"net"
-	"time"
-	"google.golang.org/grpc/codes"
 )
 
 var (
 	pb = flag.String("d", "descriptor.pb", "FileDescriptorSet protocol buffer file")
 	port = flag.Int("p", 9000, "The gRPC server port")
 	proxy = flag.Int("proxy", 8000, "The gRPC proxy port")
+	accessLog = flag.Int("log", 10000, "The gRPC access log service port")
+	accessControl = flag.Int("control", 10000, "The gRPC access control service port")
 )
-
-func doAccessLog(method string, responseTime time.Duration, stat codes.Code, in int, out int) {
-	fmt.Println(method, responseTime, stat, in, out)
-}
-
-func doStreamAccessLog(method string, responseTime time.Duration, stat codes.Code) {
-	fmt.Println(method, responseTime, stat)
-}
-
-func doAccessControl(method string, keys []string) Policy {
-	return ALLOW
-}
 
 func main() {
 	flag.Parse()
@@ -52,10 +40,23 @@ func main() {
 		log.Printf("listen %v port", *port)
 	}
 
-	opts := []grpc.ServerOption{
-		grpc.UnaryInterceptor(*createAccessLogInterceptor(doAccessLog, createApiKeyInterceptor(doAccessControl, nil))),
-		grpc.StreamInterceptor(*createStreamAccessLogInterceptor(doStreamAccessLog, createStreamApiKeyInterceptor(doAccessControl, nil))),
+	logInterceptor := NewAccessLogInterceptor(accessLog)
+	controlInterceptor := NewAccessControlInterceptor(accessControl)
+
+	opts := []grpc.ServerOption{}
+
+	{
+		f := controlInterceptor.createApiKeyInterceptor(nil)
+		g := logInterceptor.createAccessLogInterceptor(f)
+		opts = append(opts, grpc.UnaryInterceptor(*g))
 	}
+
+	{
+		f := controlInterceptor.createStreamApiKeyInterceptor(nil)
+		g := logInterceptor.createStreamAccessLogInterceptor(f)
+		opts = append(opts, grpc.StreamInterceptor(*g))
+	}
+
 	server := grpc.NewServer(opts...)
 
 	proxy, err := NewProxyServer(*proxy)

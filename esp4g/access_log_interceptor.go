@@ -6,9 +6,46 @@ import (
 	"time"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
+	extension "github.com/nokamoto/esp4g/protobuf"
+	"log"
+	"fmt"
 )
 
-func createAccessLogInterceptor(log func(string, time.Duration, codes.Code, int, int), next *grpc.UnaryServerInterceptor) *grpc.UnaryServerInterceptor {
+type accessLogInterceptor struct {
+	con *grpc.ClientConn
+}
+
+func NewAccessLogInterceptor(port *int) *accessLogInterceptor {
+	opts := []grpc.DialOption{grpc.WithInsecure()}
+
+	con, err := grpc.Dial(fmt.Sprintf("localhost:%d", *port), opts...)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &accessLogInterceptor{con: con}
+}
+
+func (a *accessLogInterceptor)doAccessLog(method string, responseTime time.Duration, stat codes.Code, in int, out int) error {
+	client := extension.NewAccessLogServiceClient(a.con)
+	unary := extension.UnaryAccessLog{
+		Method: method,
+	}
+	_, err := client.UnaryAccess(context.Background(), &unary)
+	return err
+}
+
+func (a *accessLogInterceptor)doStreamAccessLog(method string, responseTime time.Duration, stat codes.Code) error {
+	client := extension.NewAccessLogServiceClient(a.con)
+	stream := extension.StreamAccessLog{
+		Method: method,
+	}
+	_, err := client.StreamAccess(context.Background(), &stream)
+	return err
+}
+
+
+func (a *accessLogInterceptor)createAccessLogInterceptor(next *grpc.UnaryServerInterceptor) *grpc.UnaryServerInterceptor {
 	f := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		start := time.Now()
 
@@ -37,7 +74,9 @@ func createAccessLogInterceptor(log func(string, time.Duration, codes.Code, int,
 			outBytes = len(m.bytes)
 		}
 
-		log(info.FullMethod, elapsed, code, inBytes, outBytes)
+		if skipErr := a.doAccessLog(info.FullMethod, elapsed, code, inBytes, outBytes); skipErr != nil {
+			log.Println(skipErr)
+		}
 
 		return res, err
 	}
@@ -47,7 +86,7 @@ func createAccessLogInterceptor(log func(string, time.Duration, codes.Code, int,
 	return &i
 }
 
-func createStreamAccessLogInterceptor(log func(string, time.Duration, codes.Code), next *grpc.StreamServerInterceptor) *grpc.StreamServerInterceptor {
+func (a *accessLogInterceptor)createStreamAccessLogInterceptor(next *grpc.StreamServerInterceptor) *grpc.StreamServerInterceptor {
 	f := func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		start := time.Now()
 
@@ -65,7 +104,9 @@ func createStreamAccessLogInterceptor(log func(string, time.Duration, codes.Code
 			code = stat.Code()
 		}
 
-		log(info.FullMethod, elapsed, code)
+		if skipErr := a.doStreamAccessLog(info.FullMethod, elapsed, code); skipErr != nil {
+			log.Println(skipErr)
+		}
 
 		return err
 	}
