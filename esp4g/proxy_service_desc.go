@@ -48,6 +48,12 @@ func createServerSideStreamingProxyHandler(method string, desc *grpc.StreamDesc)
 	}
 }
 
+func createBidirectionalStreamingProxyHandler(method string, desc *grpc.StreamDesc) func(interface{}, grpc.ServerStream) error {
+	return func(srv interface{}, stream grpc.ServerStream) error {
+		return srv.(ProxyServer).ProxyBidirectionalStreaming(method, &bidirectionalServerStream{stream}, desc)
+	}
+}
+
 func nilOrBool(x *bool) bool {
 	return x != nil && *x
 }
@@ -77,7 +83,7 @@ func createServiceDesc(file *descriptor.FileDescriptorProto, service *descriptor
 			last := len(streams) - 1
 
 			if cs && ss {
-
+				streams[last].Handler = createBidirectionalStreamingProxyHandler(methodName, &streams[last])
 			} else if cs {
 				streams[last].Handler = createClientSideStreamingProxyHandler(methodName, &streams[last])
 			} else if ss {
