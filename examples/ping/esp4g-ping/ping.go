@@ -6,8 +6,8 @@ import (
 	"os"
 	"google.golang.org/grpc"
 	ping "github.com/nokamoto/esp4g/examples/ping/protobuf"
-	"context"
 	"time"
+	"golang.org/x/net/context"
 )
 
 var (
@@ -15,7 +15,18 @@ var (
 	port = flag.Int("p", 9000, "The gRPC server port")
 	interval = flag.Int("n", 1, "Wait n seconds")
 	unavailable = flag.Bool("u", false, "Send ping to Unavailable")
+	apikey = flag.String("k", "guest", "The gRPC request 'x-api-key'")
 )
+
+type PerRPCCredentials struct {}
+
+func (PerRPCCredentials)GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
+	return map[string]string{"x-api-key": *apikey}, nil
+}
+
+func (PerRPCCredentials)RequireTransportSecurity() bool {
+	return false
+}
 
 func send(client ping.PingServiceClient, req ping.Ping) (*ping.Pong, error) {
 	if *unavailable {
@@ -27,7 +38,7 @@ func send(client ping.PingServiceClient, req ping.Ping) (*ping.Pong, error) {
 func main() {
 	flag.Parse()
 
-	opts := []grpc.DialOption{grpc.WithInsecure()}
+	opts := []grpc.DialOption{grpc.WithInsecure(), grpc.WithPerRPCCredentials(PerRPCCredentials{})}
 
 	con, err := grpc.Dial(fmt.Sprintf("%s:%d", *host, *port), opts...)
 	if err != nil {
