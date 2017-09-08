@@ -14,6 +14,6 @@ func (*accessControlService)Access(context.Context, *extension.AccessIdentity) (
 	return nil, status.Error(codes.Unimplemented, "not implemented yet")
 }
 
-func NewAccessControlService() *accessControlService {
+func NewAccessControlService(_ Config) *accessControlService {
 	return &accessControlService{}
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
+	"github.com/golang/protobuf/ptypes/duration"
 	extension "github.com/nokamoto/esp4g/protobuf"
 	"log"
 	"fmt"
@@ -26,10 +27,21 @@ func NewAccessLogInterceptor(port *int) *accessLogInterceptor {
 	return &accessLogInterceptor{con: con}
 }
 
+func convert(d time.Duration) *duration.Duration {
+	return &duration.Duration{
+		Seconds: d.Nanoseconds() / time.Second.Nanoseconds(),
+		Nanos: int32(d.Nanoseconds() % time.Second.Nanoseconds()),
+	}
+}
+
 func (a *accessLogInterceptor)doAccessLog(method string, responseTime time.Duration, stat codes.Code, in int, out int) error {
 	client := extension.NewAccessLogServiceClient(a.con)
 	unary := extension.UnaryAccessLog{
 		Method: method,
+		ResponseTime: convert(responseTime),
+		Status: stat.String(),
+		RequestSize: int64(in),
+		ResponseSize: int64(out),
 	}
 	_, err := client.UnaryAccess(context.Background(), &unary)
 	return err
@@ -39,6 +51,8 @@ func (a *accessLogInterceptor)doStreamAccessLog(method string, responseTime time
 	client := extension.NewAccessLogServiceClient(a.con)
 	stream := extension.StreamAccessLog{
 		Method: method,
+		ResponseTime: convert(responseTime),
+		Status: stat.String(),
 	}
 	_, err := client.StreamAccess(context.Background(), &stream)
 	return err
