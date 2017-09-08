@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"golang.org/x/net/context"
 	"log"
+	"io"
 )
 
 type ProxyServer interface {
 	Proxy(ctx context.Context, method string, req *ProxyMessage) (interface{}, error)
+
+	ProxyClientSideStreaming(method string, stream *clientSideServerStream, desc *grpc.StreamDesc) error
 }
 
 type proxyServer struct {
@@ -20,6 +23,37 @@ func (p *proxyServer)Proxy(ctx context.Context, method string, req *ProxyMessage
 	out := NewProxyMessage()
 	err := grpc.Invoke(ctx, method, req, out, p.con)
 	return out, err
+}
+
+func (p *proxyServer)ProxyClientSideStreaming(method string, stream *clientSideServerStream, desc *grpc.StreamDesc) error {
+	log.Printf("%s", method)
+
+	cs, err := grpc.NewClientStream(context.Background(), desc, p.con, method)
+	if err != nil {
+		return err
+	}
+
+	proxy := clientSideClientStream{cs}
+
+	for {
+		m, err := stream.Recv()
+		if err == io.EOF {
+			res, err := proxy.CloseAndRecv()
+			if err != nil {
+				return err
+			}
+			stream.SendAndClose(res)
+			break
+		}
+		if err != nil {
+			return err
+		}
+		if err = proxy.Send(m); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func NewProxyServer(port int) (*proxyServer, error) {

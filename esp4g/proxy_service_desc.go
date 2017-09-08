@@ -32,6 +32,16 @@ func createProxyHandler(method string) func(interface{}, context.Context, func(i
 	}
 }
 
+func createProxyClientSideStreamingHandler(method string, desc *grpc.StreamDesc) func(interface{}, grpc.ServerStream) error {
+	return func(srv interface{}, stream grpc.ServerStream) error {
+		return srv.(ProxyServer).ProxyClientSideStreaming(method, &clientSideServerStream{stream}, desc)
+	}
+}
+
+func nilOrBool(x *bool) bool {
+	return x != nil && *x
+}
+
 func createServiceDesc(file *descriptor.FileDescriptorProto, service *descriptor.ServiceDescriptorProto) grpc.ServiceDesc {
 	log.Printf("service: %v", service)
 
@@ -42,14 +52,37 @@ func createServiceDesc(file *descriptor.FileDescriptorProto, service *descriptor
 
 	for _, method := range service.Method {
 		methodName := fmt.Sprintf("/%s/%s", serviceName, method.GetName())
-		handler := createProxyHandler(methodName)
 
-		desc := grpc.MethodDesc{
-			MethodName: method.GetName(),
-			Handler: handler,
+		cs := nilOrBool(method.ClientStreaming)
+		ss := nilOrBool(method.ServerStreaming)
+
+		if cs || ss {
+			desc := grpc.StreamDesc{
+				StreamName: method.GetName(),
+				ServerStreams: ss,
+				ClientStreams: cs,
+			}
+
+			streams = append(streams, desc)
+			last := len(streams) - 1
+
+			if cs && ss {
+
+			} else if cs {
+				streams[last].Handler = createProxyClientSideStreamingHandler(methodName, &streams[last])
+			} else if ss {
+
+			}
+		} else {
+			handler := createProxyHandler(methodName)
+
+			desc := grpc.MethodDesc{
+				MethodName: method.GetName(),
+				Handler: handler,
+			}
+
+			methods = append(methods, desc)
 		}
-
-		methods = append(methods, desc)
 	}
 
 	return grpc.ServiceDesc{

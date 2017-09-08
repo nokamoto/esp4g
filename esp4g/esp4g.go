@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	pb = flag.String("descriptor", "descriptor.pb", "FileDescriptorSet protocol buffer file")
+	pb = flag.String("d", "descriptor.pb", "FileDescriptorSet protocol buffer file")
 	port = flag.Int("p", 9000, "The gRPC server port")
 	proxy = flag.Int("proxy", 8000, "The gRPC proxy port")
 )

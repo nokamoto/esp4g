@@ -5,7 +5,8 @@ deps:
 	go get github.com/golang/protobuf/protoc-gen-go
 
 protoc:
-	protoc -I./examples/ping/protobuf --include_imports --include_source_info ./examples/ping/protobuf/service.proto --descriptor_set_out descriptor.pb
+	protoc -I./examples/ping/protobuf --include_imports --include_source_info ./examples/ping/protobuf/service.proto --descriptor_set_out ./examples/ping/protobuf/descriptor.pb
+	protoc -I./examples/calc/protobuf --include_imports --include_source_info ./examples/calc/protobuf/service.proto --descriptor_set_out ./examples/calc/protobuf/descriptor.pb
 	protoc --go_out=plugins=grpc:. examples/ping/protobuf/service.proto
 	protoc --go_out=plugins=grpc:. examples/calc/protobuf/service.proto
 
