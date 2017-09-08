@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package esp4g.calc;
+
+message Operand {
+  int64 x = 1;
+
+  int64 y = 2;
+}
+
+message OperandList {
+  repeated Operand operand = 1;
+}
+
+message Sum {
+  int64 z = 3;
+}
+
+service CalcService {
+  rpc AddAll(stream Operand) returns (Sum) {}
+
+  rpc AddDeffered(OperandList) returns (stream Sum) {}
+
+  rpc AddAsync(stream Operand) returns (stream Sum) {}
+}
