@@ -1,6 +1,3 @@
-server:
-  port: 10000
-
 usage:
   rules:
     - selector: "/esp4g.calc.CalcService/AddAsync"

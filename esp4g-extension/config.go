@@ -1,9 +1,5 @@
 package main
 
-type Server struct {
-	Port int `yaml:"port"`
-}
-
 type Rule struct {
 	Selector string `yaml:"selector"`
 
@@ -17,7 +13,5 @@ type Usage struct {
 }
 
 type Config struct {
-	Server Server `yaml:"server"`
-
 	Usage Usage `yaml:"usage"`
 }
