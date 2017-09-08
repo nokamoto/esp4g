@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/duration.proto";
+
+package eps4g.extension;
+
+message UnaryAccessLog {
+  string method = 1;
+
+  google.protobuf.Duration response_time = 2;
+
+  string status = 3;
+
+  int64 request_size = 4;
+
+  int64 response_size = 5;
+}
+
+message StreamAccessLog {
+  string method = 1;
+
+  google.protobuf.Duration response_time = 2;
+
+  string status = 3;
+}
+
+service AccessLogService {
+  rpc UnaryAccess(UnaryAccessLog) returns (google.protobuf.Empty) {}
+
+  rpc StreamAccess(StreamAccessLog) returns (google.protobuf.Empty) {}
+}
+
+message AccessIdentity {
+  string method = 1;
+
+  repeated string api_key = 2;
+}
+
+enum AccessPolicy {
+  ALLOW = 0;
+
+  DENY = 1;
+}
+
+message AccessControl {
+  AccessPolicy policy = 1;
+}
+
+service AccessControlService {
+  rpc Access(AccessIdentity) returns (AccessControl) {}
+}
