@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	port = flag.Int("p", 10000, "The gRPC server port")
 	yml = flag.String("c", "./config.yaml", "The application config file path")
 )
 
@@ -29,11 +30,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", config.Server.Port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	} else {
-		log.Printf("listen %v port", config.Server.Port)
+		log.Printf("listen %v port", *port)
 	}
 
 	opts := []grpc.ServerOption{}
