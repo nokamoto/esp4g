@@ -10,6 +10,8 @@ type CalcService struct {
 	allResponses []calc.Sum
 	defferedRequests []*calc.OperandList
 	defferedResponses [][]calc.Sum
+	lastRequests []*calc.Operand
+	lastResponses []*calc.Sum
 }
 
 func (c *CalcService)AddAll(stream calc.CalcService_AddAllServer) error {
@@ -55,5 +57,26 @@ func (c *CalcService)AddDeffered(req *calc.OperandList, stream calc.CalcService_
 }
 
 func (c *CalcService)AddAsync(stream calc.CalcService_AddAsyncServer) error {
+	c.lastRequests = []*calc.Operand{}
+	c.lastResponses = []*calc.Sum{}
+
+	for {
+		operand, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		sum := &calc.Sum{Z: operand.GetX() + operand.GetY()}
+		if err := stream.Send(sum); err != nil {
+			return err
+		}
+
+		c.lastRequests = append(c.lastRequests, operand)
+		c.lastResponses = append(c.lastResponses, sum)
+	}
+
 	return nil
 }
