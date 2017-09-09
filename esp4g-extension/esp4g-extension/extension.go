@@ -22,8 +22,8 @@ func NewGrpcServer(yml string) *grpc.Server {
 	opts := []grpc.ServerOption{}
 	server := grpc.NewServer(opts...)
 
-	proto.RegisterAccessControlServiceServer(server, NewAccessControlService(config))
-	proto.RegisterAccessLogServiceServer(server, NewAccessLogService(config))
+	proto.RegisterAccessControlServiceServer(server, newAccessControlService(config))
+	proto.RegisterAccessLogServiceServer(server, newAccessLogService(config))
 
 	return server
 }

@@ -1,28 +1,28 @@
 package esp4g
 
-type ProxyMessage struct {
+type proxyMessage struct {
 	bytes []byte
 }
 
-func NewProxyMessage() *ProxyMessage {
-	return &ProxyMessage{}
+func newProxyMessage() *proxyMessage {
+	return &proxyMessage{}
 }
 
-func (p *ProxyMessage)Marshal() ([]byte, error) {
+func (p *proxyMessage)Marshal() ([]byte, error) {
 	return p.bytes, nil
 }
 
-func (p *ProxyMessage)Unmarshal(bytes []byte) error {
+func (p *proxyMessage)Unmarshal(bytes []byte) error {
 	p.bytes = bytes
 	return nil
 }
 
-func (p *ProxyMessage)Reset() {
-	*p = ProxyMessage{}
+func (p *proxyMessage)Reset() {
+	*p = proxyMessage{}
 }
 
-func (p *ProxyMessage)String() string {
+func (p *proxyMessage)String() string {
 	return string(p.bytes)
 }
 
-func (*ProxyMessage)ProtoMessage() {}
+func (*proxyMessage)ProtoMessage() {}

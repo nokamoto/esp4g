@@ -6,12 +6,12 @@ type bidirectionalServerStream struct {
 	grpc.ServerStream
 }
 
-func (b *bidirectionalServerStream) Send(m *ProxyMessage) error {
+func (b *bidirectionalServerStream) Send(m *proxyMessage) error {
 	return b.ServerStream.SendMsg(m)
 }
 
-func (b *bidirectionalServerStream) Recv() (*ProxyMessage, error) {
-	m := NewProxyMessage()
+func (b *bidirectionalServerStream) Recv() (*proxyMessage, error) {
+	m := newProxyMessage()
 	if err := b.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -22,12 +22,12 @@ type bidirectionalClientStream struct {
 	grpc.ClientStream
 }
 
-func (b *bidirectionalClientStream)Send(m *ProxyMessage) error {
+func (b *bidirectionalClientStream)Send(m *proxyMessage) error {
 	return b.ClientStream.SendMsg(m)
 }
 
-func (b *bidirectionalClientStream)Recv() (*ProxyMessage, error) {
-	m := NewProxyMessage()
+func (b *bidirectionalClientStream)Recv() (*proxyMessage, error) {
+	m := newProxyMessage()
 	if err := b.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}

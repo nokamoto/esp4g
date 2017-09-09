@@ -18,10 +18,10 @@ func NewGrpcServer(pb string, proxyPort int, accessLogPort int, accessControlPor
 
 	proto.Unmarshal(data, fds)
 
-	services := CreateProxyServiceDesc(fds)
+	services := createProxyServiceDesc(fds)
 
-	logInterceptor := NewAccessLogInterceptor(accessLogPort)
-	controlInterceptor := NewAccessControlInterceptor(accessControlPort)
+	logInterceptor := newAccessLogInterceptor(accessLogPort)
+	controlInterceptor := newAccessControlInterceptor(accessControlPort)
 
 	opts := []grpc.ServerOption{}
 
@@ -39,7 +39,7 @@ func NewGrpcServer(pb string, proxyPort int, accessLogPort int, accessControlPor
 
 	server := grpc.NewServer(opts...)
 
-	proxy, err := NewProxyServer(proxyPort)
+	proxy, err := newProxyServer(proxyPort)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -17,7 +17,7 @@ type accessControlInterceptor struct {
 	con *grpc.ClientConn
 }
 
-func NewAccessControlInterceptor(port int) *accessControlInterceptor {
+func newAccessControlInterceptor(port int) *accessControlInterceptor {
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
 	con, err := grpc.Dial(fmt.Sprintf("localhost:%d", port), opts...)

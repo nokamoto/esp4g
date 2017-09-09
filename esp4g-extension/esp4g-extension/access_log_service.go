@@ -38,7 +38,7 @@ func (a *accessLogService)StreamAccess(_ context.Context, stream *proto.StreamAc
 	return &empty.Empty{}, nil
 }
 
-func NewAccessLogService(_ Config) *accessLogService {
+func newAccessLogService(_ Config) *accessLogService {
 	logger, err := zap.NewProduction()
 	if err != nil {
 		log.Fatal(err)
