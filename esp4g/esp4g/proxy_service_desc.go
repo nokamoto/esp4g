@@ -3,7 +3,6 @@ package esp4g
 import (
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"google.golang.org/grpc"
-	"log"
 	"fmt"
 	"golang.org/x/net/context"
 )
@@ -59,7 +58,7 @@ func nilOrBool(x *bool) bool {
 }
 
 func createServiceDesc(file *descriptor.FileDescriptorProto, service *descriptor.ServiceDescriptorProto) grpc.ServiceDesc {
-	log.Printf("service: %v", service)
+	Logger.Infow("service descriptor", "service", service)
 
 	serviceName := fmt.Sprintf("%s.%s", file.GetPackage(), service.GetName())
 
@@ -114,7 +113,7 @@ func createProxyServiceDesc(fds *descriptor.FileDescriptorSet) []grpc.ServiceDes
 	services := make([]grpc.ServiceDesc, 0)
 
 	for _, file := range fds.GetFile() {
-		log.Printf("file: %v", file.GetName())
+		Logger.Infow("file descriptor", "file", file.GetName())
 
 		for _, service := range file.GetService() {
 			services = append(services, createServiceDesc(file, service))

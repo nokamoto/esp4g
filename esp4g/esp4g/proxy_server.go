@@ -4,7 +4,6 @@ import (
 	"google.golang.org/grpc"
 	"fmt"
 	"golang.org/x/net/context"
-	"log"
 	"io"
 )
 
@@ -23,14 +22,14 @@ type proxyServerImpl struct {
 }
 
 func (p *proxyServerImpl)Proxy(ctx context.Context, method string, req *proxyMessage) (interface{}, error) {
-	log.Printf("%s", method)
+	Logger.Debugw("unary", "method", method)
 	out := newProxyMessage()
 	err := grpc.Invoke(ctx, method, req, out, p.con)
 	return out, err
 }
 
 func (p *proxyServerImpl)ProxyClientSideStreaming(method string, stream *clientSideServerStream, desc *grpc.StreamDesc) error {
-	log.Printf("%s", method)
+	Logger.Debugw("client-side", "method", method)
 
 	cs, err := grpc.NewClientStream(context.Background(), desc, p.con, method)
 	if err != nil {
@@ -61,7 +60,7 @@ func (p *proxyServerImpl)ProxyClientSideStreaming(method string, stream *clientS
 }
 
 func (p *proxyServerImpl)ProxyServerSideStreaming(method string, req *proxyMessage, stream *serverSideServerStream, desc *grpc.StreamDesc) error {
-	log.Printf("%s", method)
+	Logger.Debugw("server-side", "method", method)
 
 	cs, err := grpc.NewClientStream(context.Background(), desc, p.con, method)
 	if err != nil {
@@ -93,7 +92,7 @@ func (p *proxyServerImpl)ProxyServerSideStreaming(method string, req *proxyMessa
 }
 
 func (p *proxyServerImpl)ProxyBidirectionalStreaming(method string, stream *bidirectionalServerStream, desc *grpc.StreamDesc) error {
-	log.Printf("%s", method)
+	Logger.Debugw("bidirectional", "method", method)
 
 	cs, err := grpc.NewClientStream(context.Background(), desc, p.con, method)
 	if err != nil {
