@@ -2,12 +2,10 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net"
 	"fmt"
 	"github.com/nokamoto/esp4g/esp4g-extension/esp4g-extension"
 )
-
 
 func main() {
 	var (
@@ -19,13 +17,13 @@ func main() {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		extension.Logger.Fatalw("failed to listen", "err", err)
 	} else {
-		log.Printf("listen %v port", *port)
+		extension.Logger.Infow("listen port", "port", *port)
 	}
 
 	server := extension.NewGrpcServer(*yml)
 
-	log.Println("start esp extension server...")
+	extension.Logger.Info("start esp extension server")
 	server.Serve(lis)
 }
