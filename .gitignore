@@ -1,3 +1,4 @@
 .idea/
 descriptor.pb
 esp4g-test/unary-descriptor.pb
+esp4g-test/stream-descriptor.pb
