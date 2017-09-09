@@ -9,5 +9,3 @@ message Unary {
 service UnaryService {
   rpc Send(Unary) returns (Unary) {}
 }
-
-
