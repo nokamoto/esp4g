@@ -5,3 +5,6 @@ usage:
 
     - selector: /esp4g.calc.CalcService/AddAll
       allow_unregistered_calls: true
+
+    - selector: /esp4g.calc.CalcService/AddDeffered
+      allow_unregistered_calls: true
