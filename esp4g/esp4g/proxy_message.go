@@ -1,4 +1,4 @@
-package main
+package esp4g
 
 type ProxyMessage struct {
 	bytes []byte

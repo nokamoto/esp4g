@@ -1,28 +1,15 @@
-package main
+package esp4g
 
 import (
-	"flag"
 	"io/ioutil"
 	"log"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"google.golang.org/grpc"
-	"fmt"
-	"net"
 )
 
-var (
-	pb = flag.String("d", "descriptor.pb", "FileDescriptorSet protocol buffer file")
-	port = flag.Int("p", 9000, "The gRPC server port")
-	proxy = flag.Int("proxy", 8000, "The gRPC proxy port")
-	accessLog = flag.Int("log", 10000, "The gRPC access log service port")
-	accessControl = flag.Int("control", 10000, "The gRPC access control service port")
-)
-
-func main() {
-	flag.Parse()
-
-	data, err := ioutil.ReadFile(*pb)
+func NewGrpcServer(pb string, proxyPort int, accessLogPort int, accessControlPort int) *grpc.Server {
+	data, err := ioutil.ReadFile(pb)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,15 +20,8 @@ func main() {
 
 	services := CreateProxyServiceDesc(fds)
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	} else {
-		log.Printf("listen %v port", *port)
-	}
-
-	logInterceptor := NewAccessLogInterceptor(accessLog)
-	controlInterceptor := NewAccessControlInterceptor(accessControl)
+	logInterceptor := NewAccessLogInterceptor(accessLogPort)
+	controlInterceptor := NewAccessControlInterceptor(accessControlPort)
 
 	opts := []grpc.ServerOption{}
 
@@ -59,7 +39,7 @@ func main() {
 
 	server := grpc.NewServer(opts...)
 
-	proxy, err := NewProxyServer(*proxy)
+	proxy, err := NewProxyServer(proxyPort)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -69,6 +49,5 @@ func main() {
 		server.RegisterService(&desc, proxy)
 	}
 
-	log.Println("start esp server...")
-	server.Serve(lis)
+	return server
 }

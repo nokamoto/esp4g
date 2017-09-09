@@ -1,4 +1,4 @@
-package main
+package esp4g
 
 import (
 	"google.golang.org/grpc"
@@ -16,10 +16,10 @@ type accessLogInterceptor struct {
 	con *grpc.ClientConn
 }
 
-func NewAccessLogInterceptor(port *int) *accessLogInterceptor {
+func NewAccessLogInterceptor(port int) *accessLogInterceptor {
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
-	con, err := grpc.Dial(fmt.Sprintf("localhost:%d", *port), opts...)
+	con, err := grpc.Dial(fmt.Sprintf("localhost:%d", port), opts...)
 	if err != nil {
 		log.Fatal(err)
 	}
