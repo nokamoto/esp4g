@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func newGrpcServer(port int) (*grpc.Server, *PingService, *CalcService) {
+func newGrpcServer() (*grpc.Server, *PingService, *CalcService) {
 	opts := []grpc.ServerOption{}
 	server := grpc.NewServer(opts...)
 
@@ -28,7 +28,7 @@ func newGrpcServer(port int) (*grpc.Server, *PingService, *CalcService) {
 func withServers(t *testing.T, descriptor string, config string, f func(*grpc.ClientConn, *PingService, *CalcService)) {
 	proxyServer := esp4g.NewGrpcServer(descriptor, UPSTREAM_PORT, EXTENSION_PORT, EXTENSION_PORT)
 	extensionServer := extension.NewGrpcServer(config)
-	upstreamServer, ps, cs := newGrpcServer(UPSTREAM_PORT)
+	upstreamServer, ps, cs := newGrpcServer()
 
 	proxy := make(chan error, 1)
 	ext := make(chan error, 1)
@@ -70,7 +70,7 @@ func withServers(t *testing.T, descriptor string, config string, f func(*grpc.Cl
 
 	defer con.Close()
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	f(con, ps, cs)
 

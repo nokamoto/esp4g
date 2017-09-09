@@ -8,14 +8,14 @@ import (
 )
 
 type PingService struct {
-	requests []ping.Ping
-	responses []ping.Pong
+	lastRequest *ping.Ping
+	lastResponse *ping.Pong
 }
 
 func (p *PingService)Send(_ context.Context, req *ping.Ping) (*ping.Pong, error) {
-	p.requests = append(p.requests, *req)
-	p.responses = append(p.responses, ping.Pong{Y: req.GetX()})
-	return &p.responses[len(p.responses) - 1], nil
+	p.lastRequest = req
+	p.lastResponse = &ping.Pong{Y: req.GetX()}
+	return p.lastResponse, nil
 }
 
 func (p *PingService)Unavailable(context.Context, *ping.Ping) (*ping.Pong, error) {
