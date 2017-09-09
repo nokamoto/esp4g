@@ -1,4 +1,4 @@
-all: deps protoc install
+all: deps protoc gtest install
 
 deps:
 	go get google.golang.org/grpc
@@ -12,6 +12,10 @@ protoc:
 	protoc --go_out=plugins=grpc:. examples/ping/protobuf/service.proto
 	protoc --go_out=plugins=grpc:. examples/calc/protobuf/service.proto
 	protoc --go_out=plugins=grpc:. ./protobuf/service.proto
+
+gtest:
+	protoc -I./examples/ping/protobuf --include_imports --include_source_info ./examples/ping/protobuf/service.proto --descriptor_set_out ./esp4g-test/unary-descriptor.pb
+	go test ./esp4g-test
 
 install:
 	go install ./examples/ping/esp4g-ping
