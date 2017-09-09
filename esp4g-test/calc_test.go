@@ -8,6 +8,8 @@ import (
 type CalcService struct {
 	allRequests [][]*calc.Operand
 	allResponses []calc.Sum
+	defferedRequests []*calc.OperandList
+	defferedResponses [][]calc.Sum
 }
 
 func (c *CalcService)AddAll(stream calc.CalcService_AddAllServer) error {
@@ -37,6 +39,18 @@ func (c *CalcService)AddAll(stream calc.CalcService_AddAllServer) error {
 }
 
 func (c *CalcService)AddDeffered(req *calc.OperandList, stream calc.CalcService_AddDefferedServer) error {
+	res := []calc.Sum{}
+	for _, operand := range req.GetOperand() {
+		sum := calc.Sum{Z: operand.GetX() + operand.GetY()}
+		if err := stream.Send(&sum); err != nil {
+			return err
+		}
+		res = append(res, sum)
+	}
+
+	c.defferedRequests = append(c.defferedRequests, req)
+	c.defferedResponses = append(c.defferedResponses, res)
+
 	return nil
 }
 
