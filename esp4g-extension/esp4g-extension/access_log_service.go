@@ -15,6 +15,9 @@ type accessLogService struct {
 }
 
 func convert(d *duration.Duration) time.Duration {
+	if d == nil {
+		return time.Duration(-1)
+	}
 	return time.Duration(d.Seconds) * time.Second + time.Duration(d.Nanos)
 }
 

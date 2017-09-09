@@ -19,6 +19,8 @@ const EXTENSION_PORT = 10000
 
 func TestUnaryProxy(t *testing.T) {
 	withServers(t, UNARY_DESCRIPTOR, CONFIG, func(con *grpc.ClientConn, service *PingService, _ *CalcService) {
+		preflightPing(t, con)
+
 		client := ping.NewPingServiceClient(con)
 
 		req := &ping.Ping{X: 100}
@@ -38,6 +40,8 @@ func TestUnaryProxy(t *testing.T) {
 
 func TestClientSideStreamingProxy(t *testing.T) {
 	withServers(t, STREAM_DESCRIPTOR, CONFIG, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
+		preflightCalc(t, con)
+
 		client := calc.NewCalcServiceClient(con)
 
 		if stream, err := client.AddAll(context.Background()); err != nil {
@@ -83,6 +87,8 @@ func TestClientSideStreamingProxy(t *testing.T) {
 
 func TestServerSideStreamingProxy(t *testing.T) {
 	withServers(t, STREAM_DESCRIPTOR, CONFIG, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
+		preflightCalc(t, con)
+
 		client := calc.NewCalcServiceClient(con)
 
 		req := &calc.OperandList{}
@@ -139,6 +145,8 @@ func TestServerSideStreamingProxy(t *testing.T) {
 
 func TestBidirectionalStreamingProxy(t *testing.T) {
 	withServers(t, STREAM_DESCRIPTOR, CONFIG, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
+		preflightCalc(t, con)
+
 		client := calc.NewCalcServiceClient(con)
 
 		if stream, err := client.AddAsync(context.Background()); err != nil {
