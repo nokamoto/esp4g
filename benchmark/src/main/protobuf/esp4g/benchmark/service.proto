@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package esp4g.benchmark;
+
+message Unary {
+  string text = 1;
+}
+
+service UnaryService {
+  rpc Send(Unary) returns (Unary) {}
+}
+
+
