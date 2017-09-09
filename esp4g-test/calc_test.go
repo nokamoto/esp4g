@@ -6,17 +6,17 @@ import (
 )
 
 type CalcService struct {
-	allRequests [][]*calc.Operand
-	allResponses []calc.Sum
-	defferedRequests []*calc.OperandList
-	defferedResponses [][]calc.Sum
-	lastRequests []*calc.Operand
-	lastResponses []*calc.Sum
+	lastAllRequests       []*calc.Operand
+	lastAllResponse       *calc.Sum
+	lastDefferedRequest   *calc.OperandList
+	lastDefferedResponses []*calc.Sum
+	lastAsyncRequests     []*calc.Operand
+	lastAsyncResponses    []*calc.Sum
 }
 
 func (c *CalcService)AddAll(stream calc.CalcService_AddAllServer) error {
-	all := []*calc.Operand{}
-	sum := calc.Sum{Z: 0}
+	c.lastAllRequests = []*calc.Operand{}
+	c.lastAllResponse = &calc.Sum{}
 
 	for {
 		req, err := stream.Recv()
@@ -26,39 +26,36 @@ func (c *CalcService)AddAll(stream calc.CalcService_AddAllServer) error {
 		if err != nil {
 			return err
 		}
-		all = append(all, req)
-		sum.Z = sum.Z + req.GetX() + req.GetY()
+		c.lastAllRequests = append(c.lastAllRequests, req)
+		c.lastAllResponse.Z = c.lastAllResponse.Z + req.GetX() + req.GetY()
 	}
 
-	if err := stream.SendAndClose(&sum); err != nil {
+	if err := stream.SendAndClose(c.lastAllResponse); err != nil {
 		return err
 	}
-
-	c.allRequests = append(c.allRequests, all)
-	c.allResponses = append(c.allResponses, sum)
 
 	return nil
 }
 
 func (c *CalcService)AddDeffered(req *calc.OperandList, stream calc.CalcService_AddDefferedServer) error {
-	res := []calc.Sum{}
+	c.lastDefferedResponses = []*calc.Sum{}
+
 	for _, operand := range req.GetOperand() {
-		sum := calc.Sum{Z: operand.GetX() + operand.GetY()}
-		if err := stream.Send(&sum); err != nil {
+		sum := &calc.Sum{Z: operand.GetX() + operand.GetY()}
+		if err := stream.Send(sum); err != nil {
 			return err
 		}
-		res = append(res, sum)
+		c.lastDefferedResponses = append(c.lastDefferedResponses, sum)
 	}
 
-	c.defferedRequests = append(c.defferedRequests, req)
-	c.defferedResponses = append(c.defferedResponses, res)
+	c.lastDefferedRequest = req
 
 	return nil
 }
 
 func (c *CalcService)AddAsync(stream calc.CalcService_AddAsyncServer) error {
-	c.lastRequests = []*calc.Operand{}
-	c.lastResponses = []*calc.Sum{}
+	c.lastAsyncRequests = []*calc.Operand{}
+	c.lastAsyncResponses = []*calc.Sum{}
 
 	for {
 		operand, err := stream.Recv()
@@ -74,8 +71,8 @@ func (c *CalcService)AddAsync(stream calc.CalcService_AddAsyncServer) error {
 			return err
 		}
 
-		c.lastRequests = append(c.lastRequests, operand)
-		c.lastResponses = append(c.lastResponses, sum)
+		c.lastAsyncRequests = append(c.lastAsyncRequests, operand)
+		c.lastAsyncResponses = append(c.lastAsyncResponses, sum)
 	}
 
 	return nil

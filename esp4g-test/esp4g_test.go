@@ -27,11 +27,11 @@ func TestUnaryProxy(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if len(service.requests) != 1 || *req != service.requests[0] {
-			t.Errorf("unexpected request: %v %v", req, service.requests)
+		if *req != *service.lastRequest {
+			t.Errorf("unexpected request: %v %v", req, service.lastRequest)
 		}
-		if len(service.responses) != 1 || *res != service.responses[0] {
-			t.Errorf("unexpected response: %v %v", res, service.responses)
+		if *res != *service.lastResponse {
+			t.Errorf("unexpected response: %v %v", res, service.lastResponse)
 		}
 	})
 }
@@ -43,16 +43,20 @@ func TestClientSideStreamingProxy(t *testing.T) {
 		if stream, err := client.AddAll(context.Background()); err != nil {
 			t.Error(err)
 		} else {
+			requests := []*calc.Operand{}
+
 			i := int64(0)
 			sum := int64(0)
 			for i < 5 {
 				x := i * 2
 				y := (i * 2) + 1
-				req := calc.Operand{X: x, Y: y}
+				req := &calc.Operand{X: x, Y: y}
 
-				if err = stream.Send(&req); err != nil {
+				if err = stream.Send(req); err != nil {
 					t.Error(err)
 				}
+
+				requests = append(requests, req)
 
 				i = i + 1
 				sum = sum + x + y
@@ -65,23 +69,12 @@ func TestClientSideStreamingProxy(t *testing.T) {
 					t.Errorf("%v != %v", sum, res)
 				}
 
-				i := int64(0)
-				for i < 5 {
-					x := i * 2
-					y := (i * 2) + 1
-
-					if len(service.allRequests) != 1 ||
-						len(service.allRequests[0]) != 5 ||
-						service.allRequests[0][i].GetX() != x ||
-						service.allRequests[0][i].GetY() != y {
-						t.Errorf("unexpected request: %v %v %v", service.allRequests[0][i], x, y)
-					}
-
-					i = i + 1
+				if !reflect.DeepEqual(requests, service.lastAllRequests) {
+					t.Errorf("unexpected request: %v %v", requests, service.lastAllRequests)
 				}
 
-				if len(service.allResponses) != 1 || *res != service.allResponses[0] {
-					t.Errorf("unexpected response: %v %v", res, service.allResponses[0])
+				if *res != *service.lastAllResponse {
+					t.Errorf("unexpected response: %v %v", res, service.lastAllResponse)
 				}
 			}
 		}
@@ -120,12 +113,12 @@ func TestServerSideStreamingProxy(t *testing.T) {
 				res = append(res, sum)
 			}
 
-			if len(service.defferedRequests) != 1 || reflect.DeepEqual(*req, service.defferedRequests[0]) {
-				t.Errorf("unexpected request: %v %v", req, service.defferedRequests[0])
+			if !reflect.DeepEqual(req, service.lastDefferedRequest) {
+				t.Errorf("unexpected request: %v %v", req, service.lastDefferedRequest)
 			}
 
-			if len(res) != 5 || len(service.defferedResponses) != 1 || len(service.defferedResponses[0]) != 5 {
-				t.Errorf("unexpected response length: %v %v", res, service.defferedResponses)
+			if !reflect.DeepEqual(res, service.lastDefferedResponses) {
+				t.Errorf("unexpected response length: %v %v", res, service.lastDefferedResponses)
 			}
 
 			i := int64(0)
@@ -133,8 +126,8 @@ func TestServerSideStreamingProxy(t *testing.T) {
 				x := i * 2
 				y := (i * 2) + 1
 
-				if *res[i] != service.defferedResponses[0][i] || res[i].GetZ() != x + y {
-					t.Errorf("unexpected response: %v %v", res[i], service.defferedResponses[0][i])
+				if res[i].GetZ() != x + y {
+					t.Errorf("unexpected response: %v %v %v", res[i], x, y)
 				}
 
 				i = i + 1
@@ -183,12 +176,12 @@ func TestBidirectionalStreamingProxy(t *testing.T) {
 				t.Error(err)
 			}
 
-			if !reflect.DeepEqual(requests, service.lastRequests) {
-				t.Errorf("unexpected request: %v %v", requests, service.lastRequests)
+			if !reflect.DeepEqual(requests, service.lastAsyncRequests) {
+				t.Errorf("unexpected request: %v %v", requests, service.lastAsyncRequests)
 			}
 
-			if !reflect.DeepEqual(responses, service.lastResponses) {
-				t.Errorf("unexpected response: %v %v", responses, service.lastResponses)
+			if !reflect.DeepEqual(responses, service.lastAsyncResponses) {
+				t.Errorf("unexpected response: %v %v", responses, service.lastAsyncResponses)
 			}
 		}
 	})
