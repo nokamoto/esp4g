@@ -53,6 +53,7 @@ func (a *accessControlInterceptor)createApiKeyInterceptor(next *grpc.UnaryServer
 		policy, err := a.doAccessControl(info.FullMethod, apiKey)
 		if err != nil {
 			log.Println(err)
+			return nil, status.Error(codes.Unavailable, "proxy server error")
 		}
 		if policy == extension.AccessPolicy_ALLOW {
 			if next != nil {
@@ -81,6 +82,7 @@ func (a *accessControlInterceptor)createStreamApiKeyInterceptor(next *grpc.Strea
 		policy, err := a.doAccessControl(info.FullMethod, apiKey)
 		if err != nil {
 			log.Println(err)
+			return status.Error(codes.Unavailable, "proxy server error")
 		}
 		if policy == extension.AccessPolicy_ALLOW {
 			if next != nil {
