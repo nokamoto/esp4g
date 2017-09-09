@@ -28,6 +28,6 @@ func (a *accessControlService)Access(_ context.Context, id *proto.AccessIdentity
 	return &proto.AccessControl{Policy: proto.AccessPolicy_DENY}, nil
 }
 
-func NewAccessControlService(config Config) *accessControlService {
+func newAccessControlService(config Config) *accessControlService {
 	return &accessControlService{rules: config.Usage.Rules}
 }

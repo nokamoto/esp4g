@@ -6,12 +6,12 @@ type clientSideServerStream struct {
 	grpc.ServerStream
 }
 
-func (c *clientSideServerStream) SendAndClose(m *ProxyMessage) error {
+func (c *clientSideServerStream) SendAndClose(m *proxyMessage) error {
 	return c.ServerStream.SendMsg(m)
 }
 
-func (c *clientSideServerStream) Recv() (*ProxyMessage, error) {
-	m := NewProxyMessage()
+func (c *clientSideServerStream) Recv() (*proxyMessage, error) {
+	m := newProxyMessage()
 	if err := c.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -22,15 +22,15 @@ type clientSideClientStream struct {
 	grpc.ClientStream
 }
 
-func (c *clientSideClientStream)Send(m *ProxyMessage) error {
+func (c *clientSideClientStream)Send(m *proxyMessage) error {
 	return c.ClientStream.SendMsg(m)
 }
 
-func (c *clientSideClientStream)CloseAndRecv() (*ProxyMessage, error) {
+func (c *clientSideClientStream)CloseAndRecv() (*proxyMessage, error) {
 	if err := c.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := NewProxyMessage()
+	m := newProxyMessage()
 	if err := c.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}

@@ -8,28 +8,28 @@ import (
 	"io"
 )
 
-type ProxyServer interface {
-	Proxy(ctx context.Context, method string, req *ProxyMessage) (interface{}, error)
+type proxyServer interface {
+	Proxy(ctx context.Context, method string, req *proxyMessage) (interface{}, error)
 
 	ProxyClientSideStreaming(method string, stream *clientSideServerStream, desc *grpc.StreamDesc) error
 
-	ProxyServerSideStreaming(method string, req *ProxyMessage, stream *serverSideServerStream, desc *grpc.StreamDesc) error
+	ProxyServerSideStreaming(method string, req *proxyMessage, stream *serverSideServerStream, desc *grpc.StreamDesc) error
 
 	ProxyBidirectionalStreaming(method string, stream *bidirectionalServerStream, desc *grpc.StreamDesc) error
 }
 
-type proxyServer struct {
+type proxyServerImpl struct {
 	con *grpc.ClientConn
 }
 
-func (p *proxyServer)Proxy(ctx context.Context, method string, req *ProxyMessage) (interface{}, error) {
+func (p *proxyServerImpl)Proxy(ctx context.Context, method string, req *proxyMessage) (interface{}, error) {
 	log.Printf("%s", method)
-	out := NewProxyMessage()
+	out := newProxyMessage()
 	err := grpc.Invoke(ctx, method, req, out, p.con)
 	return out, err
 }
 
-func (p *proxyServer)ProxyClientSideStreaming(method string, stream *clientSideServerStream, desc *grpc.StreamDesc) error {
+func (p *proxyServerImpl)ProxyClientSideStreaming(method string, stream *clientSideServerStream, desc *grpc.StreamDesc) error {
 	log.Printf("%s", method)
 
 	cs, err := grpc.NewClientStream(context.Background(), desc, p.con, method)
@@ -60,7 +60,7 @@ func (p *proxyServer)ProxyClientSideStreaming(method string, stream *clientSideS
 	return nil
 }
 
-func (p *proxyServer)ProxyServerSideStreaming(method string, req *ProxyMessage, stream *serverSideServerStream, desc *grpc.StreamDesc) error {
+func (p *proxyServerImpl)ProxyServerSideStreaming(method string, req *proxyMessage, stream *serverSideServerStream, desc *grpc.StreamDesc) error {
 	log.Printf("%s", method)
 
 	cs, err := grpc.NewClientStream(context.Background(), desc, p.con, method)
@@ -92,7 +92,7 @@ func (p *proxyServer)ProxyServerSideStreaming(method string, req *ProxyMessage, 
 	return nil
 }
 
-func (p *proxyServer)ProxyBidirectionalStreaming(method string, stream *bidirectionalServerStream, desc *grpc.StreamDesc) error {
+func (p *proxyServerImpl)ProxyBidirectionalStreaming(method string, stream *bidirectionalServerStream, desc *grpc.StreamDesc) error {
 	log.Printf("%s", method)
 
 	cs, err := grpc.NewClientStream(context.Background(), desc, p.con, method)
@@ -154,7 +154,7 @@ func (p *proxyServer)ProxyBidirectionalStreaming(method string, stream *bidirect
 	return nil
 }
 
-func NewProxyServer(port int) (*proxyServer, error) {
+func newProxyServer(port int) (*proxyServerImpl, error) {
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
 	con, err := grpc.Dial(fmt.Sprintf("localhost:%d", port), opts...)
@@ -162,5 +162,5 @@ func NewProxyServer(port int) (*proxyServer, error) {
 		return nil, err
 	}
 
-	return &proxyServer{con: con}, nil
+	return &proxyServerImpl{con: con}, nil
 }

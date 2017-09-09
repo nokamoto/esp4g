@@ -10,13 +10,13 @@ import (
 
 func createProxyHandler(method string) func(interface{}, context.Context, func(interface{}) error, grpc.UnaryServerInterceptor) (interface{}, error) {
 	return func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-		in := NewProxyMessage()
+		in := newProxyMessage()
 		if err := dec(in); err != nil {
 			return nil, err
 		}
 
 		if interceptor == nil {
-			return srv.(ProxyServer).Proxy(ctx, method, in)
+			return srv.(proxyServer).Proxy(ctx, method, in)
 		}
 
 		info := &grpc.UnaryServerInfo{
@@ -25,7 +25,7 @@ func createProxyHandler(method string) func(interface{}, context.Context, func(i
 		}
 
 		handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-			return srv.(ProxyServer).Proxy(ctx, method, in)
+			return srv.(proxyServer).Proxy(ctx, method, in)
 		}
 
 		return interceptor(ctx, in, info, handler)
@@ -34,23 +34,23 @@ func createProxyHandler(method string) func(interface{}, context.Context, func(i
 
 func createClientSideStreamingProxyHandler(method string, desc *grpc.StreamDesc) func(interface{}, grpc.ServerStream) error {
 	return func(srv interface{}, stream grpc.ServerStream) error {
-		return srv.(ProxyServer).ProxyClientSideStreaming(method, &clientSideServerStream{stream}, desc)
+		return srv.(proxyServer).ProxyClientSideStreaming(method, &clientSideServerStream{stream}, desc)
 	}
 }
 
 func createServerSideStreamingProxyHandler(method string, desc *grpc.StreamDesc) func(interface{}, grpc.ServerStream) error {
 	return func(srv interface{}, stream grpc.ServerStream) error {
-		m := new(ProxyMessage)
+		m := new(proxyMessage)
 		if err := stream.RecvMsg(m); err != nil {
 			return err
 		}
-		return srv.(ProxyServer).ProxyServerSideStreaming(method, m, &serverSideServerStream{stream}, desc)
+		return srv.(proxyServer).ProxyServerSideStreaming(method, m, &serverSideServerStream{stream}, desc)
 	}
 }
 
 func createBidirectionalStreamingProxyHandler(method string, desc *grpc.StreamDesc) func(interface{}, grpc.ServerStream) error {
 	return func(srv interface{}, stream grpc.ServerStream) error {
-		return srv.(ProxyServer).ProxyBidirectionalStreaming(method, &bidirectionalServerStream{stream}, desc)
+		return srv.(proxyServer).ProxyBidirectionalStreaming(method, &bidirectionalServerStream{stream}, desc)
 	}
 }
 
@@ -103,14 +103,14 @@ func createServiceDesc(file *descriptor.FileDescriptorProto, service *descriptor
 
 	return grpc.ServiceDesc{
 		ServiceName: serviceName,
-		HandlerType: (*ProxyServer)(nil),
+		HandlerType: (*proxyServer)(nil),
 		Metadata: file.GetName(),
 		Methods: methods,
 		Streams: streams,
 	}
 }
 
-func CreateProxyServiceDesc(fds *descriptor.FileDescriptorSet) []grpc.ServiceDesc {
+func createProxyServiceDesc(fds *descriptor.FileDescriptorSet) []grpc.ServiceDesc {
 	services := make([]grpc.ServiceDesc, 0)
 
 	for _, file := range fds.GetFile() {

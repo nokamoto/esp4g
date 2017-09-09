@@ -16,7 +16,7 @@ type accessLogInterceptor struct {
 	con *grpc.ClientConn
 }
 
-func NewAccessLogInterceptor(port int) *accessLogInterceptor {
+func newAccessLogInterceptor(port int) *accessLogInterceptor {
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
 	con, err := grpc.Dial(fmt.Sprintf("localhost:%d", port), opts...)
@@ -81,10 +81,10 @@ func (a *accessLogInterceptor)createAccessLogInterceptor(next *grpc.UnaryServerI
 
 		inBytes := -1
 		outBytes := -1
-		if m, ok := req.(*ProxyMessage); ok {
+		if m, ok := req.(*proxyMessage); ok {
 			inBytes = len(m.bytes)
 		}
-		if m, ok := res.(*ProxyMessage); ok {
+		if m, ok := res.(*proxyMessage); ok {
 			outBytes = len(m.bytes)
 		}
 
