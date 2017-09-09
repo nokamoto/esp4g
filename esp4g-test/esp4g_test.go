@@ -144,4 +144,53 @@ func TestServerSideStreamingProxy(t *testing.T) {
 	})
 }
 
+func TestBidirectionalStreamingProxy(t *testing.T) {
+	withServers(t, STREAM_DESCRIPTOR, CONFIG, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
+		client := calc.NewCalcServiceClient(con)
+
+		if stream, err := client.AddAsync(context.Background()); err != nil {
+			t.Error(err)
+		} else {
+			requests := []*calc.Operand{}
+			responses := []*calc.Sum{}
+
+			i := int64(0)
+			for i < 5 {
+				x := i * 2
+				y := (i * 2) + 1
+				req := &calc.Operand{X: x, Y: y}
+
+				if err := stream.Send(req); err != nil {
+					t.Error(err)
+				}
+
+				res, err := stream.Recv()
+				if err != nil {
+					t.Error(err)
+				}
+
+				if res.GetZ() != x + y {
+					t.Errorf("unexpected response: %v %v %v", res, x, y)
+				}
+
+				requests = append(requests, req)
+				responses = append(responses, res)
+
+				i = i + 1
+			}
+
+			if err := stream.CloseSend(); err != nil {
+				t.Error(err)
+			}
+
+			if !reflect.DeepEqual(requests, service.lastRequests) {
+				t.Errorf("unexpected request: %v %v", requests, service.lastRequests)
+			}
+
+			if !reflect.DeepEqual(responses, service.lastResponses) {
+				t.Errorf("unexpected response: %v %v", responses, service.lastResponses)
+			}
+		}
+	})
+}
 
