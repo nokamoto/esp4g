@@ -67,7 +67,7 @@ func createServiceDesc(file *descriptor.FileDescriptorProto, service *descriptor
 	streams := make([]grpc.StreamDesc, 0)
 
 	for _, method := range service.Method {
-		methodName := fmt.Sprintf("/%s/%s", serviceName, method.GetName())
+		methodName := utils.GetFullMethodName(file, service, method)
 
 		cs := nilOrBool(method.ClientStreaming)
 		ss := nilOrBool(method.ServerStreaming)
