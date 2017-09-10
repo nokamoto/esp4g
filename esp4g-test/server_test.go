@@ -69,7 +69,7 @@ func preflightCalc(t *testing.T, con *grpc.ClientConn) {
 
 func withServers(t *testing.T, descriptor string, config string, f func(*grpc.ClientConn, *PingService, *CalcService)) {
 	proxyServer := esp4g.NewGrpcServer(descriptor, UPSTREAM_PORT, EXTENSION_PORT, EXTENSION_PORT)
-	extensionServer := extension.NewGrpcServer(config)
+	extensionServer := extension.NewGrpcServer(config, descriptor)
 	upstreamServer, ps, cs := newGrpcServer()
 
 	proxy := make(chan error, 1)

@@ -5,6 +5,7 @@ import (
 	"google.golang.org/grpc"
 	"fmt"
 	"golang.org/x/net/context"
+	"github.com/nokamoto/esp4g/esp4g-utils"
 )
 
 func createProxyHandler(method string) func(interface{}, context.Context, func(interface{}) error, grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -58,7 +59,7 @@ func nilOrBool(x *bool) bool {
 }
 
 func createServiceDesc(file *descriptor.FileDescriptorProto, service *descriptor.ServiceDescriptorProto) grpc.ServiceDesc {
-	Logger.Infow("service descriptor", "service", service)
+	utils.Logger.Infow("service descriptor", "service", service)
 
 	serviceName := fmt.Sprintf("%s.%s", file.GetPackage(), service.GetName())
 
@@ -113,7 +114,7 @@ func createProxyServiceDesc(fds *descriptor.FileDescriptorSet) []grpc.ServiceDes
 	services := make([]grpc.ServiceDesc, 0)
 
 	for _, file := range fds.GetFile() {
-		Logger.Infow("file descriptor", "file", file.GetName())
+		utils.Logger.Infow("file descriptor", "file", file.GetName())
 
 		for _, service := range file.GetService() {
 			services = append(services, createServiceDesc(file, service))

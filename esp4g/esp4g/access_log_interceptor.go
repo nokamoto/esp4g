@@ -9,6 +9,7 @@ import (
 	"github.com/golang/protobuf/ptypes/duration"
 	extension "github.com/nokamoto/esp4g/protobuf"
 	"fmt"
+	"github.com/nokamoto/esp4g/esp4g-utils"
 )
 
 type accessLogInterceptor struct {
@@ -20,7 +21,7 @@ func newAccessLogInterceptor(port int) *accessLogInterceptor {
 
 	con, err := grpc.Dial(fmt.Sprintf("localhost:%d", port), opts...)
 	if err != nil {
-		Logger.Fatalw("failed to create gRPC dial", "err", err)
+		utils.Logger.Fatalw("failed to create gRPC dial", "err", err)
 	}
 
 	return &accessLogInterceptor{con: con}
@@ -88,7 +89,7 @@ func (a *accessLogInterceptor)createAccessLogInterceptor(next *grpc.UnaryServerI
 		}
 
 		if skipErr := a.doAccessLog(info.FullMethod, elapsed, code, inBytes, outBytes); skipErr != nil {
-			Logger.Infow("access log failed", "err", skipErr)
+			utils.Logger.Infow("access log failed", "err", skipErr)
 		}
 
 		return res, err
@@ -118,7 +119,7 @@ func (a *accessLogInterceptor)createStreamAccessLogInterceptor(next *grpc.Stream
 		}
 
 		if skipErr := a.doStreamAccessLog(info.FullMethod, elapsed, code); skipErr != nil {
-			Logger.Infow("access log failed", "err", skipErr)
+			utils.Logger.Infow("access log failed", "err", skipErr)
 		}
 
 		return err

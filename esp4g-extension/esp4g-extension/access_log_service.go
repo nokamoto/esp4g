@@ -6,6 +6,8 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"time"
 	"github.com/golang/protobuf/ptypes/duration"
+	"github.com/nokamoto/esp4g/esp4g-utils"
+	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 )
 
 type accessLogService struct {}
@@ -18,7 +20,7 @@ func convert(d *duration.Duration) time.Duration {
 }
 
 func (a *accessLogService)UnaryAccess(_ context.Context, unary *proto.UnaryAccessLog) (*empty.Empty, error) {
-	Logger.Infow("unary",
+	utils.Logger.Infow("unary",
 		"method", unary.GetMethod(),
 		"status", unary.GetStatus(),
 		"response_time", convert(unary.GetResponseTime()),
@@ -29,7 +31,7 @@ func (a *accessLogService)UnaryAccess(_ context.Context, unary *proto.UnaryAcces
 }
 
 func (a *accessLogService)StreamAccess(_ context.Context, stream *proto.StreamAccessLog) (*empty.Empty, error) {
-	Logger.Infow("stream",
+	utils.Logger.Infow("stream",
 		"method", stream.GetMethod(),
 		"status", stream.GetStatus(),
 		"response_time", convert(stream.GetResponseTime()),
@@ -37,6 +39,6 @@ func (a *accessLogService)StreamAccess(_ context.Context, stream *proto.StreamAc
 	return &empty.Empty{}, nil
 }
 
-func newAccessLogService(_ Config) *accessLogService {
+func newAccessLogService(_ Config, _ *descriptor.FileDescriptorSet) *accessLogService {
 	return &accessLogService{}
 }

@@ -3,6 +3,7 @@ package extension
 import (
 	"golang.org/x/net/context"
 	proto "github.com/nokamoto/esp4g/protobuf"
+	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 )
 
 type accessControlService struct {
@@ -28,6 +29,6 @@ func (a *accessControlService)Access(_ context.Context, id *proto.AccessIdentity
 	return &proto.AccessControl{Policy: proto.AccessPolicy_DENY}, nil
 }
 
-func newAccessControlService(config Config) *accessControlService {
+func newAccessControlService(config Config, _ *descriptor.FileDescriptorSet) *accessControlService {
 	return &accessControlService{rules: config.Usage.Rules}
 }

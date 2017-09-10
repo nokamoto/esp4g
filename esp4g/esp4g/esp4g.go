@@ -1,21 +1,15 @@
 package esp4g
 
 import (
-	"io/ioutil"
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"google.golang.org/grpc"
+	"github.com/nokamoto/esp4g/esp4g-utils"
 )
 
 func NewGrpcServer(pb string, proxyPort int, accessLogPort int, accessControlPort int) *grpc.Server {
-	data, err := ioutil.ReadFile(pb)
+	fds, err := utils.ReadFileDescriptorSet(pb)
 	if err != nil {
-		Logger.Fatalw("failed to read pb file", "pb", pb, "err", err)
+		utils.Logger.Fatalw("failed to read pb file", "pb", pb, "err", err)
 	}
-
-	fds := &descriptor.FileDescriptorSet{}
-
-	proto.Unmarshal(data, fds)
 
 	services := createProxyServiceDesc(fds)
 
@@ -40,7 +34,7 @@ func NewGrpcServer(pb string, proxyPort int, accessLogPort int, accessControlPor
 
 	proxy, err := newProxyServer(proxyPort)
 	if err != nil {
-		Logger.Fatalw("failed to create new proxy server", "err", err)
+		utils.Logger.Fatalw("failed to create new proxy server", "err", err)
 	}
 
 	for _, desc := range services {

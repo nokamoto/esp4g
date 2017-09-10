@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"fmt"
 	extension "github.com/nokamoto/esp4g/protobuf"
+	"github.com/nokamoto/esp4g/esp4g-utils"
 )
 
 const API_KEY_HEADER = "x-api-key"
@@ -21,7 +22,7 @@ func newAccessControlInterceptor(port int) *accessControlInterceptor {
 
 	con, err := grpc.Dial(fmt.Sprintf("localhost:%d", port), opts...)
 	if err != nil {
-		Logger.Fatalw("failed to create gRPC dial", "err", err)
+		utils.Logger.Fatalw("failed to create gRPC dial", "err", err)
 	}
 
 	return &accessControlInterceptor{con: con}
@@ -51,7 +52,7 @@ func (a *accessControlInterceptor)createApiKeyInterceptor(next *grpc.UnaryServer
 
 		policy, err := a.doAccessControl(info.FullMethod, apiKey)
 		if err != nil {
-			Logger.Infow("access control failed", "err", err)
+			utils.Logger.Infow("access control failed", "err", err)
 			return nil, status.Error(codes.Unavailable, "proxy server error")
 		}
 		if policy == extension.AccessPolicy_ALLOW {
@@ -80,7 +81,7 @@ func (a *accessControlInterceptor)createStreamApiKeyInterceptor(next *grpc.Strea
 
 		policy, err := a.doAccessControl(info.FullMethod, apiKey)
 		if err != nil {
-			Logger.Infow("access control failed", "err", err)
+			utils.Logger.Infow("access control failed", "err", err)
 			return status.Error(codes.Unavailable, "proxy server error")
 		}
 		if policy == extension.AccessPolicy_ALLOW {

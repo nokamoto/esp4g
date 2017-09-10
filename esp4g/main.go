@@ -5,6 +5,7 @@ import (
 	"net"
 	"fmt"
 	"github.com/nokamoto/esp4g/esp4g/esp4g"
+	"github.com/nokamoto/esp4g/esp4g-utils"
 )
 
 func main() {
@@ -20,13 +21,13 @@ func main() {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
-		esp4g.Logger.Fatalw("failed to listen", "err", err)
+		utils.Logger.Fatalw("failed to listen", "err", err)
 	} else {
-		esp4g.Logger.Infow("listen port", "port", port)
+		utils.Logger.Infow("listen port", "port", port)
 	}
 
 	server := esp4g.NewGrpcServer(*pb, *proxy, *log, *control)
 
-	esp4g.Logger.Infow("start esp server")
+	utils.Logger.Infow("start esp server")
 	server.Serve(lis)
 }
