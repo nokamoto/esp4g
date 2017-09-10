@@ -12,9 +12,9 @@ func main() {
 	var (
 		pb      = flag.String("d", "descriptor.pb", "FileDescriptorSet protocol buffer file")
 		port    = flag.Int("p", 9000, "The gRPC server port")
-		proxy   = flag.Int("proxy", 8000, "The gRPC proxy port")
-		log     = flag.Int("log", 10000, "The gRPC access log service port")
-		control = flag.Int("control", 10000, "The gRPC access control service port")
+		proxy   = flag.String("proxy", "localhost:8000", "The gRPC proxy address")
+		log     = flag.String("log", "localhost:10000", "The gRPC access log service address")
+		control = flag.String("control", "localhost:10000", "The gRPC access control service address")
 	)
 
 	flag.Parse()

@@ -5,7 +5,7 @@ import (
 	"github.com/nokamoto/esp4g/esp4g-utils"
 )
 
-func NewGrpcServer(pb string, proxyPort int, accessLogPort int, accessControlPort int) *grpc.Server {
+func NewGrpcServer(pb string, proxyAddress string, accessLogAddress string, accessControlAddress string) *grpc.Server {
 	fds, err := utils.ReadFileDescriptorSet(pb)
 	if err != nil {
 		utils.Logger.Fatalw("failed to read pb file", "pb", pb, "err", err)
@@ -13,8 +13,8 @@ func NewGrpcServer(pb string, proxyPort int, accessLogPort int, accessControlPor
 
 	services := createProxyServiceDesc(fds)
 
-	logInterceptor := newAccessLogInterceptor(accessLogPort)
-	controlInterceptor := newAccessControlInterceptor(accessControlPort)
+	logInterceptor := newAccessLogInterceptor(accessLogAddress)
+	controlInterceptor := newAccessControlInterceptor(accessControlAddress)
 
 	opts := []grpc.ServerOption{}
 
@@ -32,7 +32,7 @@ func NewGrpcServer(pb string, proxyPort int, accessLogPort int, accessControlPor
 
 	server := grpc.NewServer(opts...)
 
-	proxy, err := newProxyServer(proxyPort)
+	proxy, err := newProxyServer(proxyAddress)
 	if err != nil {
 		utils.Logger.Fatalw("failed to create new proxy server", "err", err)
 	}
