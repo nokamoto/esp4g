@@ -56,7 +56,7 @@ func (a *accessLogService)UnaryAccess(_ context.Context, unary *proto.UnaryAcces
 		observer(unary, a.requestSizeHistogram).Observe(float64(unary.GetRequestSize()))
 	}
 	if a.responseSizeHistogram != nil {
-		observer(unary, a.requestSizeHistogram).Observe(float64(unary.GetResponseSize()))
+		observer(unary, a.responseSizeHistogram).Observe(float64(unary.GetResponseSize()))
 	}
 	return &empty.Empty{}, nil
 }
