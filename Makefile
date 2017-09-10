@@ -5,6 +5,7 @@ deps:
 	go get github.com/golang/protobuf/protoc-gen-go
 	go get gopkg.in/yaml.v2
 	go get go.uber.org/zap
+	go get github.com/prometheus/client_golang/prometheus
 
 protoc:
 	protoc -I./examples/ping/protobuf --include_imports --include_source_info ./examples/ping/protobuf/service.proto --descriptor_set_out ./examples/ping/protobuf/descriptor.pb
