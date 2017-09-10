@@ -11,3 +11,9 @@ jobs:
       - run: echo 'export PATH=$HOME/protoc/bin:$PATH' >> $BASH_ENV
       - run: make
       - run: git diff --exit-code
+
+      - setup_remote_docker:
+          version: 17.06.0-ce
+      - run: |
+          docker login -u $DOCKER_USER -p $DOCKER_PASS
+          ./docker/build.sh
