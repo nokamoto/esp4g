@@ -1,0 +1,56 @@
+version: '3'
+services:
+  benchmark:
+    image: nokamotohub/esp4g-examples-benchmark
+    ports:
+      - "8000:8000"
+    expose:
+      - "8000"
+
+  extension:
+    image: nokamotohub/esp4g-extension
+    command: -d /descriptor.pb -c /config.yaml
+    volumes:
+      - "./protobuf/descriptor.pb:/descriptor.pb"
+      - "./config.yaml:/config.yaml"
+    ports:
+      - "8080:8080"
+    expose:
+      - "8080"
+      - "10000"
+
+  esp4g:
+    image: nokamotohub/esp4g
+    command: -d /descriptor.pb -proxy example.esp4g:8000 -log extension.esp4g:10000 -control extension.esp4g:10000
+    volumes:
+      - "./protobuf/descriptor.pb:/descriptor.pb"
+    ports:
+      - "9000:9000"
+    depends_on:
+      - benchmark
+      - extension
+    links:
+      - benchmark:example.esp4g
+      - extension:extension.esp4g
+
+  prometheus:
+    image: prom/prometheus:v1.7.1
+    volumes:
+      - "../prometheus.yml:/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    expose:
+      - "9090"
+    depends_on:
+      - extension
+    links:
+      - extension:extension.esp4g
+
+  grafana:
+    image: grafana/grafana:4.4.3
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    links:
+      - prometheus:prometheus.esp4g

@@ -1,0 +1,22 @@
+logs:
+  logging: true
+  prometheus:
+    enable: true
+    address: ":8080"
+    response_time_histogram:
+      name: "grpc_response_time_seconds"
+      help: "gRPC latency distributions."
+      buckets: [0.001, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
+    request_bytes_histogram:
+      name: "grpc_request_size_bytes"
+      help: "gRPC request content size distributions."
+      buckets: [1, 2, 4, 8, 16, 32, 64, 128]
+    response_bytes_histogram:
+      name: "grpc_response_size_bytes"
+      help: "gRPC response content size distributions."
+      buckets: [1, 2, 4, 8, 16, 32, 64, 128]
+
+usage:
+  rules:
+    - selector: "/esp4g.benchmark.UnaryService/Send"
+      allow_unregistered_calls: true
