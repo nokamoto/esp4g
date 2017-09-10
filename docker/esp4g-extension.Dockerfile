@@ -1,7 +1,11 @@
-FROM nokamotohub/esp4g/go
+FROM alpine:3.6
 
-RUN go get github.com/nokamoto/esp4g/esp4g-extension
+RUN apk add --no-cache --virtual .build-deps go git gcc openssl musl-dev && \
+    go get github.com/nokamoto/esp4g/esp4g-extension && \
+    apk del .build-deps
 
-RUN apk del .build-deps
+ENV PATH $PATH:/root/go/bin
 
-ENTRYPOINT esp4g-extension
+ENTRYPOINT ["esp4g-extension"]
+
+CMD ["-h"]
