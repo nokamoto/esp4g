@@ -6,7 +6,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
-	"fmt"
 	extension "github.com/nokamoto/esp4g/protobuf"
 	"github.com/nokamoto/esp4g/esp4g-utils"
 )
@@ -17,10 +16,10 @@ type accessControlInterceptor struct {
 	con *grpc.ClientConn
 }
 
-func newAccessControlInterceptor(port int) *accessControlInterceptor {
+func newAccessControlInterceptor(address string) *accessControlInterceptor {
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
-	con, err := grpc.Dial(fmt.Sprintf("localhost:%d", port), opts...)
+	con, err := grpc.Dial(address, opts...)
 	if err != nil {
 		utils.Logger.Fatalw("failed to create gRPC dial", "err", err)
 	}

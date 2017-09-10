@@ -2,7 +2,6 @@ package esp4g
 
 import (
 	"google.golang.org/grpc"
-	"fmt"
 	"golang.org/x/net/context"
 	"io"
 	"github.com/nokamoto/esp4g/esp4g-utils"
@@ -154,10 +153,10 @@ func (p *proxyServerImpl)ProxyBidirectionalStreaming(method string, stream *bidi
 	return nil
 }
 
-func newProxyServer(port int) (*proxyServerImpl, error) {
+func newProxyServer(address string) (*proxyServerImpl, error) {
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
-	con, err := grpc.Dial(fmt.Sprintf("localhost:%d", port), opts...)
+	con, err := grpc.Dial(address, opts...)
 	if err != nil {
 		return nil, err
 	}
