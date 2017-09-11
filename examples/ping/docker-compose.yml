@@ -9,9 +9,10 @@ services:
 
   extension:
     image: nokamotohub/esp4g-extension
-    command: -d /data/protobuf/descriptor.pb -c /data/config.yaml
+    command: -d /descriptor.pb -c /config.yaml
     volumes:
-      - ".:/data"
+      - "./protobuf/descriptor.pb:/descriptor.pb"
+      - "./config.yaml:/config.yaml"
     ports:
       - "8080:8080"
     expose:
@@ -20,16 +21,16 @@ services:
 
   esp4g:
     image: nokamotohub/esp4g
-    command: -d /data/protobuf/descriptor.pb -proxy ping.examples.esp4g:8000 -log extension.esp4g:10000 -control extension.esp4g:10000
+    command: -d /descriptor.pb -proxy example.esp4g:8000 -log extension.esp4g:10000 -control extension.esp4g:10000
     volumes:
-      - ".:/data"
+      - "./protobuf/descriptor.pb:/descriptor.pb"
     ports:
       - "9000:9000"
     depends_on:
       - ping
       - extension
     links:
-      - ping:ping.examples.esp4g
+      - ping:examples.esp4g
       - extension:extension.esp4g
 
   prometheus:
