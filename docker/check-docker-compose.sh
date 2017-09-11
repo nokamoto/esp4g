@@ -1,18 +1,27 @@
 #!/bin/bash
 
+check () {
+    docker-compose up -d
+
+    docker-compose exec $1 echo ok
+
+    for service in esp4g prometheus grafana
+    do
+        docker-compose exec $service echo ok
+    done
+
+    docker-compose stop
+}
+
 set -ex
 
 cd `dirname $0`
 
 cd ../examples/ping
-
-docker-compose up -d
-docker-compose stop
+check ping
 
 cd ../calc
-docker-compose up -d
-docker-compose stop
+check calc
 
 cd ../benchmark
-docker-compose up -d
-docker-compose stop
+check benchmark
