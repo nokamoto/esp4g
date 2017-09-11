@@ -64,18 +64,20 @@ func preflightCalc(t *testing.T, con *grpc.ClientConn) {
 		client := calc.NewCalcServiceClient(con)
 
 		stream, err := client.AddAll(context.Background())
-		if err != nil {
-			t.Error(err)
-		}
-
-		_, err = stream.CloseAndRecv()
-
 		if err == nil {
-			return
-		}
+			err = stream.Send(&calc.Operand{})
+			if err == nil {
+				_, err := stream.CloseAndRecv()
 
-		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unauthenticated {
-			return
+				if err == nil {
+					return
+				}
+
+				if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unauthenticated {
+					t.Logf("got unauthenticated error: %s", stat.Message())
+					return
+				}
+			}
 		}
 
 		t.Logf("%d: %v", i, err)
@@ -87,7 +89,7 @@ func preflightCalc(t *testing.T, con *grpc.ClientConn) {
 	t.Error("preflight timed out")
 }
 
-func inproc(descriptor string, config string) (*grpc.Server, *grpc.Server) {
+func inproc(descriptor string, config string, c chan error) (*grpc.Server, *grpc.Server) {
 	proxy := esp4g.NewGrpcServer(
 		descriptor,
 		fmt.Sprintf("localhost:%d", UPSTREAM_PORT),
@@ -95,12 +97,12 @@ func inproc(descriptor string, config string) (*grpc.Server, *grpc.Server) {
 		config,
 	)
 
-	start(proxy, PROXY_PORT)
+	start(proxy, PROXY_PORT, c)
 
 	return proxy, nil
 }
 
-func outproc(descriptor string, config string) (*grpc.Server, *grpc.Server) {
+func outproc(descriptor string, config string, cp chan error, se chan error) (*grpc.Server, *grpc.Server) {
 	proxy := esp4g.NewGrpcServer(
 		descriptor,
 		fmt.Sprintf("localhost:%d", UPSTREAM_PORT),
@@ -108,27 +110,39 @@ func outproc(descriptor string, config string) (*grpc.Server, *grpc.Server) {
 		"",
 	)
 
-	start(proxy, PROXY_PORT)
+	start(proxy, PROXY_PORT, cp)
 
 	ext := extension.NewGrpcServer(config, descriptor)
 
-	start(ext, EXTENSION_PORT)
+	start(ext, EXTENSION_PORT, se)
 
 	return proxy, ext
 }
 
-func start(server *grpc.Server, port int) {
+func start(server *grpc.Server, port int, c chan error) {
 	go func() {
 		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-		if err == nil {
-			server.Serve(lis)
+		if err != nil {
+			c <- err
+		} else {
+			c <- server.Serve(lis)
 		}
 	}()
 }
 
-func run(servers []*grpc.Server, t *testing.T, f func(*grpc.ClientConn, *PingService, *CalcService)) {
+func stop(t *testing.T, server *grpc.Server, c chan error) {
+	server.GracefulStop()
+
+	select {
+	case err := <- c:
+		t.Log("gracefully shutdown", err)
+	}
+}
+
+func run(t *testing.T, f func(*grpc.ClientConn, *PingService, *CalcService)) {
+	upstream := make(chan error, 1)
 	upstreamServer, ps, cs := newGrpcServer()
-	start(upstreamServer, UPSTREAM_PORT)
+	start(upstreamServer, UPSTREAM_PORT, upstream)
 
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
@@ -141,23 +155,25 @@ func run(servers []*grpc.Server, t *testing.T, f func(*grpc.ClientConn, *PingSer
 
 	f(con, ps, cs)
 
-	for _, server := range servers {
-		if server != nil {
-			server.GracefulStop()
-		}
-	}
-
-	upstreamServer.GracefulStop()
+	stop(t, upstreamServer, upstream)
 }
 
 func withServers(t *testing.T, descriptor string, config string, f func(*grpc.ClientConn, *PingService, *CalcService)) {
-	p, e := inproc(descriptor, config)
+	proxy := make(chan error, 1)
+	p, e := inproc(descriptor, config, proxy)
 
 	t.Log("run inproc")
-	run([]*grpc.Server{p, e}, t, f)
+	run(t, f)
 
-	p, e = outproc(descriptor, config)
+	stop(t, p, proxy)
+
+	proxy = make(chan error, 1)
+	ext := make(chan error, 1)
+	p, e = outproc(descriptor, config, proxy, ext)
 
 	t.Log("run outproc")
-	run([]*grpc.Server{p, e}, t, f)
+	run(t, f)
+
+	stop(t, p, proxy)
+	stop(t, e, ext)
 }
