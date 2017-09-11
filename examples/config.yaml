@@ -18,5 +18,17 @@ logs:
 
 usage:
   rules:
+    - selector: "/esp4g.benchmark.UnaryService/Send"
+      allow_unregistered_calls: true
+
     - selector: "/eps4g.ping.PingService/Send"
+      allow_unregistered_calls: true
+
+    - selector: "/esp4g.calc.CalcService/AddAsync"
+      allow_unregistered_calls: true
+
+    - selector: "/esp4g.calc.CalcService/AddAll"
+      allow_unregistered_calls: true
+
+    - selector: "/esp4g.calc.CalcService/AddDeffered"
       allow_unregistered_calls: true

@@ -12,7 +12,7 @@ services:
     command: -d /descriptor.pb -c config.yaml
     volumes:
       - "./protobuf/descriptor.pb:/descriptor.pb"
-      - "./config.yaml:/config.yaml"
+      - "../config.yaml:/config.yaml"
     ports:
       - "8080:8080"
       - "9000:9000"
