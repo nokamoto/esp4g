@@ -11,7 +11,7 @@ import (
 func main() {
 	var (
 		port = flag.Int("p", 10000, "The gRPC server port")
-		yml = flag.String("c", "./proxy.yaml", "The application config file path")
+		yml = flag.String("c", "./config.yaml", "The application config file path")
 		pb = flag.String("d", "./descriptor.pb", "FileDescriptorSet protocol buffer file")
 	)
 
