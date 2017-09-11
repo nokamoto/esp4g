@@ -5,6 +5,8 @@ check () {
 
     docker-compose exec $1 echo ok
 
+    curl localhost:8080/metrics
+
     for service in esp4g prometheus grafana
     do
         docker-compose exec $service echo ok
