@@ -11,6 +11,8 @@ import (
 	calc "github.com/nokamoto/esp4g/examples/calc/protobuf"
 	"time"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/codes"
 )
 
 const UNARY_DESCRIPTOR = "unary-descriptor.pb"
@@ -38,7 +40,12 @@ func preflightPing(t *testing.T, con *grpc.ClientConn) {
 		client := ping.NewPingServiceClient(con)
 
 		_, err := client.Send(context.Background(), &ping.Ping{})
+
 		if err == nil {
+			return
+		}
+
+		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unauthenticated {
 			return
 		}
 
@@ -61,6 +68,10 @@ func preflightCalc(t *testing.T, con *grpc.ClientConn) {
 		_, err := stream.CloseAndRecv()
 
 		if err == nil {
+			return
+		}
+
+		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unauthenticated {
 			return
 		}
 
