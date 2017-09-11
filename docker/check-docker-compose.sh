@@ -4,10 +4,15 @@ set -ex
 
 cd `dirname $0`
 
-for package in {ping,calc,benchmark}
-do
-    cd ../examples/$package
+cd ../examples/ping
 
-    docker-compose up -d
-    docker-compose stop
-done
+docker-compose up -d
+docker-compose stop
+
+cd ../calc
+docker-compose up -d
+docker-compose stop
+
+cd ../benchmark
+docker-compose up -d
+docker-compose stop
