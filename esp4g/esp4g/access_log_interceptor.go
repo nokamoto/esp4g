@@ -7,23 +7,42 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
 	"github.com/golang/protobuf/ptypes/duration"
-	extension "github.com/nokamoto/esp4g/protobuf"
+	proto "github.com/nokamoto/esp4g/protobuf"
 	"github.com/nokamoto/esp4g/esp4g-utils"
+	"io/ioutil"
+	"gopkg.in/yaml.v2"
+	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/nokamoto/esp4g/esp4g-extension"
 )
 
 type accessLogInterceptor struct {
 	con *grpc.ClientConn
+	service *extension.AccessLogService
 }
 
-func newAccessLogInterceptor(address string) *accessLogInterceptor {
-	opts := []grpc.DialOption{grpc.WithInsecure()}
+func newAccessLogInterceptor(address string, fds *descriptor.FileDescriptorSet, yml string) *accessLogInterceptor {
+	if len(address) != 0 {
+		opts := []grpc.DialOption{grpc.WithInsecure()}
 
-	con, err := grpc.Dial(address, opts...)
-	if err != nil {
-		utils.Logger.Fatalw("failed to create gRPC dial", "err", err)
+		con, err := grpc.Dial(address, opts...)
+		if err != nil {
+			utils.Logger.Fatalw("failed to create gRPC dial", "err", err)
+		}
+
+		return &accessLogInterceptor{con: con}
 	}
 
-	return &accessLogInterceptor{con: con}
+	buf, err := ioutil.ReadFile(yml)
+	if err != nil {
+		utils.Logger.Fatalw("failed to read yaml", "yaml", yml, "err", err)
+	}
+
+	var config extension.Config
+	if err = yaml.Unmarshal(buf, &config); err != nil {
+		utils.Logger.Fatalw("failed to unmarshal", "err", err)
+	}
+
+	return &accessLogInterceptor{service:extension.NewAccessLogService(config, fds)}
 }
 
 func convert(d time.Duration) *duration.Duration {
@@ -34,26 +53,44 @@ func convert(d time.Duration) *duration.Duration {
 }
 
 func (a *accessLogInterceptor)doAccessLog(method string, responseTime time.Duration, stat codes.Code, in int, out int) error {
-	client := extension.NewAccessLogServiceClient(a.con)
-	unary := extension.UnaryAccessLog{
+	unary := proto.UnaryAccessLog{
 		Method: method,
 		ResponseTime: convert(responseTime),
 		Status: stat.String(),
 		RequestSize: int64(in),
 		ResponseSize: int64(out),
 	}
-	_, err := client.UnaryAccess(context.Background(), &unary)
+
+	var err error
+
+	if a.con != nil {
+		client := proto.NewAccessLogServiceClient(a.con)
+		_, err = client.UnaryAccess(context.Background(), &unary)
+	}
+
+	if a.service != nil {
+		_, err = a.service.UnaryAccess(context.Background(), &unary)
+	}
+
 	return err
 }
 
 func (a *accessLogInterceptor)doStreamAccessLog(method string, responseTime time.Duration, stat codes.Code) error {
-	client := extension.NewAccessLogServiceClient(a.con)
-	stream := extension.StreamAccessLog{
+	stream := proto.StreamAccessLog{
 		Method: method,
 		ResponseTime: convert(responseTime),
 		Status: stat.String(),
 	}
-	_, err := client.StreamAccess(context.Background(), &stream)
+	var err error
+
+	if a.con != nil {
+		client := proto.NewAccessLogServiceClient(a.con)
+		_, err = client.StreamAccess(context.Background(), &stream)
+	}
+
+	if a.service != nil {
+		_, err = a.service.StreamAccess(context.Background(), &stream)
+	}
 	return err
 }
 

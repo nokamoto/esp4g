@@ -13,7 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type accessLogService struct {
+type AccessLogService struct {
 	logs Logs
 
 	requestSizeHistogram *prometheus.HistogramVec
@@ -38,7 +38,7 @@ func observerStream(stream *proto.StreamAccessLog, vec *prometheus.HistogramVec)
 	return vec.WithLabelValues(stream.GetMethod(), stream.GetStatus())
 }
 
-func (a *accessLogService)UnaryAccess(_ context.Context, unary *proto.UnaryAccessLog) (*empty.Empty, error) {
+func (a *AccessLogService)UnaryAccess(_ context.Context, unary *proto.UnaryAccessLog) (*empty.Empty, error) {
 	rt := convert(unary.GetResponseTime())
 	if a.logs.Logging {
 		utils.Logger.Infow("unary",
@@ -61,7 +61,7 @@ func (a *accessLogService)UnaryAccess(_ context.Context, unary *proto.UnaryAcces
 	return &empty.Empty{}, nil
 }
 
-func (a *accessLogService)StreamAccess(_ context.Context, stream *proto.StreamAccessLog) (*empty.Empty, error) {
+func (a *AccessLogService)StreamAccess(_ context.Context, stream *proto.StreamAccessLog) (*empty.Empty, error) {
 	rt := convert(stream.GetResponseTime())
 	if a.logs.Logging {
 		utils.Logger.Infow("stream",
@@ -90,7 +90,7 @@ func register(h *Histogram, lbs []string) *prometheus.HistogramVec {
 	return nil
 }
 
-func newAccessLogService(config Config, _ *descriptor.FileDescriptorSet) *accessLogService {
+func NewAccessLogService(config Config, _ *descriptor.FileDescriptorSet) *AccessLogService {
 	c := config.Logs.Prometheus
 	var requestSizeHistogram *prometheus.HistogramVec
 	var responseSizeHistogram *prometheus.HistogramVec
@@ -109,7 +109,7 @@ func newAccessLogService(config Config, _ *descriptor.FileDescriptorSet) *access
 
 		utils.Logger.Infow("listen prometheus exporter", "address", c.Address)
 	}
-	return &accessLogService{
+	return &AccessLogService{
 		logs: config.Logs,
 		requestSizeHistogram: requestSizeHistogram,
 		responseSizeHistogram: responseSizeHistogram,

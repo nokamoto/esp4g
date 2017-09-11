@@ -28,4 +28,3 @@ install:
 	go install ./examples/calc/esp4g-calc-server
 	go install ./examples/benchmark/esp4g-benchmark-server
 	go install ./esp4g
-	go install ./esp4g-extension

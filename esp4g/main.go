@@ -10,11 +10,11 @@ import (
 
 func main() {
 	var (
-		pb      = flag.String("d", "descriptor.pb", "FileDescriptorSet protocol buffer file")
-		port    = flag.Int("p", 9000, "The gRPC server port")
-		proxy   = flag.String("proxy", "localhost:8000", "The gRPC proxy address")
-		log     = flag.String("log", "localhost:10000", "The gRPC access log service address")
-		control = flag.String("control", "localhost:10000", "The gRPC access control service address")
+		pb        = flag.String("d", "./descriptor.pb", "FileDescriptorSet protocol buffer file")
+		port      = flag.Int("p", 9000, "The gRPC server port")
+		yaml      = flag.String("c", "./config.yaml", "The application config file")
+		extension = flag.String("e", "", "The gRPC extension service address (default: in-process)")
+		proxy     = flag.String("u", "localhost:8000", "The gRPC upstream address")
 	)
 
 	flag.Parse()
@@ -26,7 +26,7 @@ func main() {
 		utils.Logger.Infow("listen port", "port", port)
 	}
 
-	server := esp4g.NewGrpcServer(*pb, *proxy, *log, *control)
+	server := esp4g.NewGrpcServer(*pb, *proxy, *extension, *yaml)
 
 	utils.Logger.Infow("start esp server")
 	server.Serve(lis)
