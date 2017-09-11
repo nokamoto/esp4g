@@ -13,6 +13,12 @@ import (
 	"golang.org/x/net/context"
 )
 
+const UNARY_DESCRIPTOR = "unary-descriptor.pb"
+const STREAM_DESCRIPTOR = "stream-descriptor.pb"
+const PROXY_PORT = 9000
+const UPSTREAM_PORT = 8000
+const EXTENSION_PORT = 10000
+
 func newGrpcServer() (*grpc.Server, *PingService, *CalcService) {
 	opts := []grpc.ServerOption{}
 	server := grpc.NewServer(opts...)

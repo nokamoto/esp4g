@@ -77,3 +77,28 @@ func (c *CalcService)AddAsync(stream calc.CalcService_AddAsyncServer) error {
 
 	return nil
 }
+
+func makeTestCase() ([]*calc.Operand, *calc.OperandList, *calc.Sum, []*calc.Sum) {
+	i := int64(0)
+
+	as := []*calc.Operand{}
+	a := &calc.OperandList{}
+	b := &calc.Sum{}
+	bs := []*calc.Sum{}
+
+	for i < 5 {
+		x, y := i * 2, (i * 2) + 1
+
+		req := &calc.Operand{X: x, Y: y}
+
+		as = append(as, req)
+		a.Operand = append(a.Operand, req)
+
+		b.Z = b.Z + x + y
+		bs = append(bs, &calc.Sum{Z: x + y})
+
+		i = i + 1
+	}
+
+	return as, a, b, bs
+}
