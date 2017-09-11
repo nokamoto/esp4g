@@ -6,36 +6,66 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
-	extension "github.com/nokamoto/esp4g/protobuf"
+	proto "github.com/nokamoto/esp4g/protobuf"
 	"github.com/nokamoto/esp4g/esp4g-utils"
+	"io/ioutil"
+	"gopkg.in/yaml.v2"
+	"github.com/nokamoto/esp4g/esp4g-extension"
+	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 )
 
 const API_KEY_HEADER = "x-api-key"
 
 type accessControlInterceptor struct {
 	con *grpc.ClientConn
+	service *extension.AccessControlService
 }
 
-func newAccessControlInterceptor(address string) *accessControlInterceptor {
-	opts := []grpc.DialOption{grpc.WithInsecure()}
+func newAccessControlInterceptor(address string, fds *descriptor.FileDescriptorSet, yml string) *accessControlInterceptor {
+	if len(address) != 0 {
+		opts := []grpc.DialOption{grpc.WithInsecure()}
 
-	con, err := grpc.Dial(address, opts...)
-	if err != nil {
-		utils.Logger.Fatalw("failed to create gRPC dial", "err", err)
+		con, err := grpc.Dial(address, opts...)
+		if err != nil {
+			utils.Logger.Fatalw("failed to create gRPC dial", "err", err)
+		}
+
+		return &accessControlInterceptor{con: con}
 	}
 
-	return &accessControlInterceptor{con: con}
+	buf, err := ioutil.ReadFile(yml)
+	if err != nil {
+		utils.Logger.Fatalw("failed to read yaml", "yaml", yml, "err", err)
+	}
+
+	var config extension.Config
+	if err = yaml.Unmarshal(buf, &config); err != nil {
+		utils.Logger.Fatalw("failed to unmarshal", "err", err)
+	}
+
+	return &accessControlInterceptor{service: extension.NewAccessControlService(config, fds)}
 }
 
-func (a *accessControlInterceptor)doAccessControl(method string, keys []string) (extension.AccessPolicy, error) {
-	client := extension.NewAccessControlServiceClient(a.con)
-	id := extension.AccessIdentity{
+func (a *accessControlInterceptor)doAccessControl(method string, keys []string) (proto.AccessPolicy, error) {
+	id := proto.AccessIdentity{
 		Method: method,
 		ApiKey: keys,
 	}
-	ctl, err := client.Access(context.Background(), &id)
+
+	var ctl *proto.AccessControl
+	var err error
+
+	if a.con != nil {
+		client := proto.NewAccessControlServiceClient(a.con)
+		ctl, err = client.Access(context.Background(), &id)
+	}
+
+	if a.service != nil {
+		ctl, err = a.service.Access(context.Background(), &id)
+	}
+
 	if err != nil {
-		return extension.AccessPolicy_DENY, err
+		return proto.AccessPolicy_DENY, err
 	}
 	return ctl.Policy, nil
 }
@@ -54,7 +84,7 @@ func (a *accessControlInterceptor)createApiKeyInterceptor(next *grpc.UnaryServer
 			utils.Logger.Infow("access control failed", "err", err)
 			return nil, status.Error(codes.Unavailable, "proxy server error")
 		}
-		if policy == extension.AccessPolicy_ALLOW {
+		if policy == proto.AccessPolicy_ALLOW {
 			if next != nil {
 				return (*next)(ctx, req, info, handler)
 			}
@@ -83,7 +113,7 @@ func (a *accessControlInterceptor)createStreamApiKeyInterceptor(next *grpc.Strea
 			utils.Logger.Infow("access control failed", "err", err)
 			return status.Error(codes.Unavailable, "proxy server error")
 		}
-		if policy == extension.AccessPolicy_ALLOW {
+		if policy == proto.AccessPolicy_ALLOW {
 			if next != nil {
 				return (*next)(srv, ss, info, handler)
 			}

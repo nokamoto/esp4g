@@ -24,7 +24,6 @@ Install:
 
 ```bash
 go get github.com/nokamoto/esp4g/esp4g
-go get github.com/nokamoto/esp4g/esp4g-extension
 ```
 
 and the example gRPC server and client:
@@ -63,9 +62,7 @@ Run:
 ```bash
 esp4g-ping-server
 
-esp4g-extension -c ./config.yaml -d ./descriptor.pb
-
-esp4g -d ./descriptor.pb
+esp4g -c ./config.yaml -d ./descriptor.pb
 ```
 
 Access _PingService_ through the esp:
@@ -93,7 +90,6 @@ docker-compose up
 | Service | Port | |
 | --- | --- | --- |
 | esp4g | 9000 | esp4g-ping |
-| esp4g-extension | 8080 | http://localhost:8080/metrics |
 | ping | 8000 | esp4g-ping -p 8000 |
 | prometheus | 9090 | http://localhost:9090 |
 | grafana | 3000 | http://localhost:3000 |

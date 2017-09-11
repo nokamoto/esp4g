@@ -6,11 +6,11 @@ import (
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 )
 
-type accessControlService struct {
+type AccessControlService struct {
 	rules []Rule
 }
 
-func (a *accessControlService)Access(_ context.Context, id *proto.AccessIdentity) (*proto.AccessControl, error) {
+func (a *AccessControlService)Access(_ context.Context, id *proto.AccessIdentity) (*proto.AccessControl, error) {
 	allow := proto.AccessControl{Policy: proto.AccessPolicy_ALLOW}
 	for _, rule := range a.rules {
 		if rule.Selector == id.Method {
@@ -29,6 +29,6 @@ func (a *accessControlService)Access(_ context.Context, id *proto.AccessIdentity
 	return &proto.AccessControl{Policy: proto.AccessPolicy_DENY}, nil
 }
 
-func newAccessControlService(config Config, _ *descriptor.FileDescriptorSet) *accessControlService {
-	return &accessControlService{rules: config.Usage.Rules}
+func NewAccessControlService(config Config, _ *descriptor.FileDescriptorSet) *AccessControlService {
+	return &AccessControlService{rules: config.Usage.Rules}
 }
