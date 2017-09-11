@@ -107,11 +107,11 @@ Add any query to the [dashboard](http://localhost:3000/dashboard).
 ![gRPC Latency Quantile](/.md/latency.png)
 
 ```
-histogram_quantile(0.99, rate(grpc_response_time_seconds_bucket[1m])) * 1000
+histogram_quantile(0.99, rate(grpc_response_seconds_bucket[1m])) * 1000
 ```
 
 ![gRPC rps](/.md/rps.png)
 
 ```
-rate(grpc_request_size_bytes_count[10s])
+rate(grpc_request_bytes_count[10s])
 ```

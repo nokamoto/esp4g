@@ -24,16 +24,18 @@ func (h Histogram)histogramOpts() prometheus.HistogramOpts {
 	}
 }
 
+type Histograms struct {
+	ResponseSeconds *Histogram `yaml:"response_seconds"`
+
+	RequestBytes *Histogram `yaml:"request_bytes"`
+
+	ResponseBytes *Histogram `yaml:"response_bytes"`
+}
+
 type Prometheus struct {
-	Enable bool `yaml:"enable"`
+	Port *int `yaml:"port"`
 
-	Address string `yaml:"address"`
-
-	ResponseTimeHistogram *Histogram `yaml:"response_time_histogram"`
-
-	RequestSizeHistogram *Histogram `yaml:"request_bytes_histogram"`
-
-	ResponseSizeHistogram *Histogram `yaml:"response_bytes_histogram"`
+	Histograms Histograms `yaml:"histograms"`
 }
 
 type Logs struct {
