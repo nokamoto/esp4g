@@ -11,16 +11,17 @@ import (
 	"net/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/client_golang/prometheus"
+	"fmt"
 )
 
 type AccessLogService struct {
 	logs Logs
 
-	requestSizeHistogram *prometheus.HistogramVec
+	requestBytesHistogram *prometheus.HistogramVec
 
-	responseSizeHistogram *prometheus.HistogramVec
+	responseBytesHistogram *prometheus.HistogramVec
 
-	responseTimeHistogram *prometheus.HistogramVec
+	responseSecondsHistogram *prometheus.HistogramVec
 }
 
 func convert(d *duration.Duration) time.Duration {
@@ -49,14 +50,14 @@ func (a *AccessLogService)UnaryAccess(_ context.Context, unary *proto.UnaryAcces
 			"response_size", unary.GetResponseSize(),
 		)
 	}
-	if a.responseTimeHistogram != nil {
-		observer(unary, a.responseTimeHistogram).Observe(rt.Seconds())
+	if a.responseSecondsHistogram != nil {
+		observer(unary, a.responseSecondsHistogram).Observe(rt.Seconds())
 	}
-	if a.requestSizeHistogram != nil {
-		observer(unary, a.requestSizeHistogram).Observe(float64(unary.GetRequestSize()))
+	if a.requestBytesHistogram != nil {
+		observer(unary, a.requestBytesHistogram).Observe(float64(unary.GetRequestSize()))
 	}
-	if a.responseSizeHistogram != nil {
-		observer(unary, a.responseSizeHistogram).Observe(float64(unary.GetResponseSize()))
+	if a.responseBytesHistogram != nil {
+		observer(unary, a.responseBytesHistogram).Observe(float64(unary.GetResponseSize()))
 	}
 	return &empty.Empty{}, nil
 }
@@ -70,8 +71,8 @@ func (a *AccessLogService)StreamAccess(_ context.Context, stream *proto.StreamAc
 			"response_time", rt,
 		)
 	}
-	if a.responseTimeHistogram != nil {
-		observerStream(stream, a.responseTimeHistogram).Observe(rt.Seconds())
+	if a.responseSecondsHistogram != nil {
+		observerStream(stream, a.responseSecondsHistogram).Observe(rt.Seconds())
 	}
 	return &empty.Empty{}, nil
 }
@@ -92,27 +93,27 @@ func register(h *Histogram, lbs []string) *prometheus.HistogramVec {
 
 func NewAccessLogService(config Config, _ *descriptor.FileDescriptorSet) *AccessLogService {
 	c := config.Logs.Prometheus
-	var requestSizeHistogram *prometheus.HistogramVec
-	var responseSizeHistogram *prometheus.HistogramVec
-	var responseTimeHistogram *prometheus.HistogramVec
-	if c.Enable {
+	var requestBytesHistogram *prometheus.HistogramVec
+	var responseBytesHistogram *prometheus.HistogramVec
+	var responseSecondsHistogram *prometheus.HistogramVec
+	if c.Port != nil {
 		lbs := labelNames()
-		requestSizeHistogram = register(c.RequestSizeHistogram, lbs)
-		responseSizeHistogram = register(c.ResponseSizeHistogram, lbs)
-		responseTimeHistogram = register(c.ResponseTimeHistogram, lbs)
+		requestBytesHistogram = register(c.Histograms.RequestBytes, lbs)
+		responseBytesHistogram = register(c.Histograms.ResponseBytes, lbs)
+		responseSecondsHistogram = register(c.Histograms.ResponseSeconds, lbs)
 
 		go func() {
 			http.Handle("/metrics", promhttp.Handler())
-			err := http.ListenAndServe(c.Address, nil)
+			err := http.ListenAndServe(fmt.Sprintf(":%d", *c.Port), nil)
 			utils.Logger.Fatalw("stop prometheus exporter", "err", err)
 		}()
 
-		utils.Logger.Infow("listen prometheus exporter", "address", c.Address)
+		utils.Logger.Infow("listen prometheus exporter", "port", c.Port)
 	}
 	return &AccessLogService{
-		logs: config.Logs,
-		requestSizeHistogram: requestSizeHistogram,
-		responseSizeHistogram: responseSizeHistogram,
-		responseTimeHistogram: responseTimeHistogram,
+		logs:                     config.Logs,
+		requestBytesHistogram:    requestBytesHistogram,
+		responseBytesHistogram:   responseBytesHistogram,
+		responseSecondsHistogram: responseSecondsHistogram,
 	}
 }
