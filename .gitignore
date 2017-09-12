@@ -2,3 +2,5 @@
 descriptor.pb
 esp4g-test/unary-descriptor.pb
 esp4g-test/stream-descriptor.pb
+/config.yaml
+/service.proto
