@@ -72,7 +72,13 @@ config.yaml
 ```bash
 cat << EOF > config.yaml
 logs:
-  logging: true
+  zap:
+    level: info
+    encoding: json
+    outputPaths:
+      - stdout
+    errorOutputPaths:
+      - stderr
 
 usage:
   rules:
@@ -160,9 +166,15 @@ Usage of esp4g:
 ### config.yaml
 ```yaml
 logs:
-  # If 'logging' is set `true`, gRPC access logs to stdout.
-  # default: false
-  logging: true
+  # If 'zap' is set, the zap logger writes gRPC access logs.
+  # default: nil
+  zap:
+    level: info
+    encoding: json
+    outputPaths:
+      - stdout
+    errorOutputPaths:
+      - stderr
 
   prometheus:
     # The port to scrape Prometheus metrics from. If 'port' is not supplied, Prometheus exporter is not available.
@@ -213,3 +225,6 @@ usage:
 
 #### Histogram configuration
 [prometheus/client_golang](https://github.com/prometheus/client_golang/blob/3eb912b336976e0f66a5eb9a434adfbba8dff646/prometheus/histogram.go#L113-L154)
+
+#### Zap configuration
+[zap godoc](https://godoc.org/go.uber.org/zap)

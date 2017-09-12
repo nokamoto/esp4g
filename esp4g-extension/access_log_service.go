@@ -4,31 +4,23 @@ import (
 	"golang.org/x/net/context"
 	proto "github.com/nokamoto/esp4g/protobuf"
 	"github.com/golang/protobuf/ptypes/empty"
-	"time"
-	"github.com/golang/protobuf/ptypes/duration"
 	"github.com/nokamoto/esp4g/esp4g-utils"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"net/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/client_golang/prometheus"
 	"fmt"
+	"go.uber.org/zap"
 )
 
 type AccessLogService struct {
-	logs Logs
+	requestBytes *prometheus.HistogramVec
 
-	requestBytesHistogram *prometheus.HistogramVec
+	responseBytes *prometheus.HistogramVec
 
-	responseBytesHistogram *prometheus.HistogramVec
+	responseSeconds *prometheus.HistogramVec
 
-	responseSecondsHistogram *prometheus.HistogramVec
-}
-
-func convert(d *duration.Duration) time.Duration {
-	if d == nil {
-		return time.Duration(-1)
-	}
-	return time.Duration(d.Seconds) * time.Second + time.Duration(d.Nanos)
+	logger *zap.SugaredLogger
 }
 
 func observer(unary *proto.UnaryAccessLog, vec *prometheus.HistogramVec) prometheus.Observer {
@@ -40,39 +32,39 @@ func observerStream(stream *proto.StreamAccessLog, vec *prometheus.HistogramVec)
 }
 
 func (a *AccessLogService)UnaryAccess(_ context.Context, unary *proto.UnaryAccessLog) (*empty.Empty, error) {
-	rt := convert(unary.GetResponseTime())
-	if a.logs.Logging {
-		utils.Logger.Infow("unary",
+	rt := utils.ConvertProtoDuration(unary.GetResponseTime())
+	if a.logger != nil {
+		a.logger.Infow("",
 			"method", unary.GetMethod(),
 			"status", unary.GetStatus(),
-			"response_time", rt,
-			"request_size", unary.GetRequestSize(),
-			"response_size", unary.GetResponseSize(),
+			"response_seconds", rt.Seconds(),
+			"request_bytes", unary.GetRequestSize(),
+			"response_bytes", unary.GetResponseSize(),
 		)
 	}
-	if a.responseSecondsHistogram != nil {
-		observer(unary, a.responseSecondsHistogram).Observe(rt.Seconds())
+	if a.responseSeconds != nil {
+		observer(unary, a.responseSeconds).Observe(rt.Seconds())
 	}
-	if a.requestBytesHistogram != nil {
-		observer(unary, a.requestBytesHistogram).Observe(float64(unary.GetRequestSize()))
+	if a.requestBytes != nil {
+		observer(unary, a.requestBytes).Observe(float64(unary.GetRequestSize()))
 	}
-	if a.responseBytesHistogram != nil {
-		observer(unary, a.responseBytesHistogram).Observe(float64(unary.GetResponseSize()))
+	if a.responseBytes != nil {
+		observer(unary, a.responseBytes).Observe(float64(unary.GetResponseSize()))
 	}
 	return &empty.Empty{}, nil
 }
 
 func (a *AccessLogService)StreamAccess(_ context.Context, stream *proto.StreamAccessLog) (*empty.Empty, error) {
-	rt := convert(stream.GetResponseTime())
-	if a.logs.Logging {
-		utils.Logger.Infow("stream",
+	rt := utils.ConvertProtoDuration(stream.GetResponseTime())
+	if a.logger != nil {
+		a.logger.Infow("",
 			"method", stream.GetMethod(),
 			"status", stream.GetStatus(),
-			"response_time", rt,
+			"response_seconds", rt.Seconds(),
 		)
 	}
-	if a.responseSecondsHistogram != nil {
-		observerStream(stream, a.responseSecondsHistogram).Observe(rt.Seconds())
+	if a.responseSeconds != nil {
+		observerStream(stream, a.responseSeconds).Observe(rt.Seconds())
 	}
 	return &empty.Empty{}, nil
 }
@@ -92,15 +84,23 @@ func register(h *Histogram, lbs []string) *prometheus.HistogramVec {
 }
 
 func NewAccessLogService(config Config, _ *descriptor.FileDescriptorSet) *AccessLogService {
+	var sugar *zap.SugaredLogger
+
+	if s, err := sugaredLogger(config); err != nil {
+		utils.Logger.Fatalw("failed to create zap logger", "err", err)
+	} else {
+		sugar = s
+	}
+
 	c := config.Logs.Prometheus
-	var requestBytesHistogram *prometheus.HistogramVec
-	var responseBytesHistogram *prometheus.HistogramVec
-	var responseSecondsHistogram *prometheus.HistogramVec
+	var requestBytes *prometheus.HistogramVec
+	var responseBytes *prometheus.HistogramVec
+	var responseSeconds *prometheus.HistogramVec
 	if c.Port != nil {
 		lbs := labelNames()
-		requestBytesHistogram = register(c.Histograms.RequestBytes, lbs)
-		responseBytesHistogram = register(c.Histograms.ResponseBytes, lbs)
-		responseSecondsHistogram = register(c.Histograms.ResponseSeconds, lbs)
+		requestBytes = register(c.Histograms.RequestBytes, lbs)
+		responseBytes = register(c.Histograms.ResponseBytes, lbs)
+		responseSeconds = register(c.Histograms.ResponseSeconds, lbs)
 
 		go func() {
 			http.Handle("/metrics", promhttp.Handler())
@@ -110,10 +110,11 @@ func NewAccessLogService(config Config, _ *descriptor.FileDescriptorSet) *Access
 
 		utils.Logger.Infow("listen prometheus exporter", "port", c.Port)
 	}
+
 	return &AccessLogService{
-		logs:                     config.Logs,
-		requestBytesHistogram:    requestBytesHistogram,
-		responseBytesHistogram:   responseBytesHistogram,
-		responseSecondsHistogram: responseSecondsHistogram,
+		requestBytes:    requestBytes,
+		responseBytes:   responseBytes,
+		responseSeconds: responseSeconds,
+		logger:          sugar,
 	}
 }
