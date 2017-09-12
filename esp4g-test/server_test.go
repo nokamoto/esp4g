@@ -130,12 +130,16 @@ func stop(t *testing.T, server *grpc.Server, c chan error) {
 	}
 }
 
-func run(t *testing.T, f func(*grpc.ClientConn, *PingService, *CalcService)) {
+func run(t *testing.T, apiKeys []string, f func(*grpc.ClientConn, *PingService, *CalcService)) {
 	upstream := make(chan error, 1)
 	upstreamServer, ps, cs := newGrpcServer()
 	start(t, upstreamServer, UPSTREAM_PORT, upstream)
 
 	opts := []grpc.DialOption{grpc.WithInsecure()}
+
+	for _, apiKey := range apiKeys {
+		opts = append(opts, grpc.WithPerRPCCredentials(PerRPCCredentials{apiKey: apiKey}))
+	}
 
 	con, err := grpc.Dial(fmt.Sprintf("localhost:%d", PROXY_PORT), opts...)
 	if err != nil {
@@ -149,12 +153,12 @@ func run(t *testing.T, f func(*grpc.ClientConn, *PingService, *CalcService)) {
 	stop(t, upstreamServer, upstream)
 }
 
-func withServers(t *testing.T, descriptor string, config string, f func(*grpc.ClientConn, *PingService, *CalcService)) {
+func withServers(t *testing.T, descriptor string, config string, apiKeys []string, f func(*grpc.ClientConn, *PingService, *CalcService)) {
 	proxy := make(chan error, 1)
 	p, e := inproc(t, descriptor, config, proxy)
 
 	t.Log("run inproc")
-	run(t, f)
+	run(t, apiKeys, f)
 
 	stop(t, p, proxy)
 
@@ -163,7 +167,7 @@ func withServers(t *testing.T, descriptor string, config string, f func(*grpc.Cl
 	p, e = outproc(t, descriptor, config, proxy, ext)
 
 	t.Log("run outproc")
-	run(t, f)
+	run(t, apiKeys, f)
 
 	stop(t, p, proxy)
 	stop(t, e, ext)

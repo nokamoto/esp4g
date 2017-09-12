@@ -1,0 +1,17 @@
+usage:
+  rules:
+    - selector: /eps4g.ping.PingService/Send
+      registered_api_keys:
+        - guest
+
+    - selector: /esp4g.calc.CalcService/AddAll
+      registered_api_keys:
+        - guest
+
+    - selector: /esp4g.calc.CalcService/AddDeffered
+      registered_api_keys:
+        - guest
+
+    - selector: /esp4g.calc.CalcService/AddAsync
+      registered_api_keys:
+        - guest

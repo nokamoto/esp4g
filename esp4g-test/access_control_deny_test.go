@@ -28,7 +28,7 @@ func expectErrorCode(t *testing.T, err error, code codes.Code) {
 func TestDenyUnregisteredCalls(t *testing.T) {
 	config := "access_control-deny.yaml"
 
-	withServers(t, UNARY_DESCRIPTOR, config, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
+	withServers(t, UNARY_DESCRIPTOR, config, []string{}, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
 		preflightPing(t, con)
 
 		_, err := callPing(con, &ping.Ping{X: 100})
@@ -37,7 +37,7 @@ func TestDenyUnregisteredCalls(t *testing.T) {
 		expectErrorCode(t, err, codes.Unauthenticated)
 	})
 
-	withServers(t, STREAM_DESCRIPTOR, config, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
+	withServers(t, STREAM_DESCRIPTOR, config, []string{}, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
 		preflightCalc(t, con)
 
 		operands, operandList, _, _ := makeTestCase()

@@ -8,6 +8,18 @@ import (
 	"io"
 )
 
+type PerRPCCredentials struct {
+	apiKey string
+}
+
+func (p PerRPCCredentials)GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
+	return map[string]string{"x-api-key": p.apiKey}, nil
+}
+
+func (PerRPCCredentials)RequireTransportSecurity() bool {
+	return false
+}
+
 func callPing(con *grpc.ClientConn, x *ping.Ping) (*ping.Pong, error) {
 	c := ping.NewPingServiceClient(con)
 	return c.Send(context.Background(), x)
