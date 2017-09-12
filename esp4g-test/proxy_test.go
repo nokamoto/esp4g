@@ -9,8 +9,8 @@ import (
 
 const PROXY_CONFIG = "proxy.yaml"
 
-func TestUnaryProxy(t *testing.T) {
-	withServers(t, UNARY_DESCRIPTOR, PROXY_CONFIG, func(con *grpc.ClientConn, service *PingService, _ *CalcService) {
+func checkUnaryProxy(t *testing.T, config string, apiKeys... string) {
+	withServers(t, UNARY_DESCRIPTOR, config, apiKeys, func(con *grpc.ClientConn, service *PingService, _ *CalcService) {
 		preflightPing(t, con)
 
 		req := &ping.Ping{X: 100}
@@ -28,8 +28,8 @@ func TestUnaryProxy(t *testing.T) {
 	})
 }
 
-func TestClientSideStreamingProxy(t *testing.T) {
-	withServers(t, STREAM_DESCRIPTOR, PROXY_CONFIG, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
+func checkClientSideStream(t *testing.T, config string, apiKeys... string) {
+	withServers(t, STREAM_DESCRIPTOR, config, apiKeys, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
 		preflightCalc(t, con)
 
 		req, _, expected, _ := makeTestCase()
@@ -53,8 +53,8 @@ func TestClientSideStreamingProxy(t *testing.T) {
 	})
 }
 
-func TestServerSideStreamingProxy(t *testing.T) {
-	withServers(t, STREAM_DESCRIPTOR, PROXY_CONFIG, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
+func checkServerSideStream(t *testing.T, config string, apiKeys... string) {
+	withServers(t, STREAM_DESCRIPTOR, config, apiKeys, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
 		preflightCalc(t, con)
 
 		_, req, _, expected := makeTestCase()
@@ -78,8 +78,8 @@ func TestServerSideStreamingProxy(t *testing.T) {
 	})
 }
 
-func TestBidirectionalStreamingProxy(t *testing.T) {
-	withServers(t, STREAM_DESCRIPTOR, PROXY_CONFIG, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
+func checkBidirectionalStream(t *testing.T, config string, apiKeys... string) {
+	withServers(t, STREAM_DESCRIPTOR, config, apiKeys, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
 		preflightCalc(t, con)
 
 		req, _, _, expected := makeTestCase()
@@ -101,5 +101,21 @@ func TestBidirectionalStreamingProxy(t *testing.T) {
 			t.Errorf("unexpected response: %v %v", res, expected)
 		}
 	})
+}
+
+func TestUnaryProxy(t *testing.T) {
+	checkUnaryProxy(t, PROXY_CONFIG)
+}
+
+func TestClientSideStreamingProxy(t *testing.T) {
+	checkClientSideStream(t, PROXY_CONFIG)
+}
+
+func TestServerSideStreamingProxy(t *testing.T) {
+	checkServerSideStream(t, PROXY_CONFIG)
+}
+
+func TestBidirectionalStreamingProxy(t *testing.T) {
+	checkBidirectionalStream(t, PROXY_CONFIG)
 }
 
