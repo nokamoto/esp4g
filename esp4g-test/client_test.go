@@ -22,6 +22,7 @@ func callCalcCStream(con *grpc.ClientConn, xs []*calc.Operand) (*calc.Sum, error
 	}
 
 	for _, x := range xs {
+		// Send may return EOF.
 		if err := stream.Send(x); err != nil {
 			return nil, err
 		}
@@ -65,6 +66,7 @@ func callCalcBStream(con *grpc.ClientConn, xs []*calc.Operand) ([]*calc.Sum, err
 	ys := []*calc.Sum{}
 
 	for _, x := range xs {
+		// Send may return EOF.
 		if err := stream.Send(x); err != nil {
 			return nil, err
 		}
