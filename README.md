@@ -5,6 +5,7 @@
 - [Overview](#overview)
 - [Installing](#installing)
 - [Quickstart](#quickstart)
+- [Concepts](#concepts)
 - [Examples](#examples)
 - [Configuratin](#configuration)
 
@@ -14,8 +15,8 @@
 Supports:
 
 - Unary/Stream gRPC proxy
-- Access log
-  - with logging
+- [Access log](#access-log)
+  - [with logging](#with-logging)
   - with prometheus exporter
 - Access control
   - with API keys
@@ -99,6 +100,30 @@ Access _PingService_ through the esp:
 
 ```bash
 esp4g-ping
+```
+
+## Concepts
+### Access Log
+#### With Logging
+With [zap](https://github.com/uber-go/zap) configuration:
+
+```yaml
+logs:
+  zap:
+    level: info
+    encoding: json
+    outputPaths:
+      - stdout
+    errorOutputPaths:
+      - stderr
+```
+
+Get gRPC access logs in stdout:
+
+```json
+{"method":"/eps4g.ping.PingService/Send","status":"OK","response_seconds":0.00183718,"request_bytes":0,"response_bytes":0}
+{"method":"/eps4g.ping.PingService/Send","status":"OK","response_seconds":0.000421483,"request_bytes":2,"response_bytes":2}
+{"method":"/eps4g.ping.PingService/Send","status":"OK","response_seconds":0.000929316,"request_bytes":2,"response_bytes":2}
 ```
 
 ## Examples
