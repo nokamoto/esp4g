@@ -27,7 +27,7 @@ docker run \
     -v /path/to/your/config.yaml:/config.yaml \
     -v /path/to/your/descriptor.pb:/descriptor.pb \
     -p 9000:9000 \
-    nokamotohub/esp4g -c /config.yaml -d descriptor.pb -proxy [host:port]
+    nokamotohub/esp4g -c /config.yaml -d /descriptor.pb -proxy [host:port]
 ```
 
 To make _descriptor.pb_ file, run _protoc_ with `--descriptor_set_out` option.
