@@ -17,7 +17,7 @@ Supports:
 - Unary/Stream gRPC proxy
 - [Access log](#access-log)
   - [with logging](#with-logging)
-  - with prometheus exporter
+  - [with prometheus](#with-prometheus)
 - Access control
   - with API keys
 
@@ -131,6 +131,41 @@ Get gRPC access logs in stdout:
   "response_bytes":2
 }
 ```
+
+#### With Prometheus
+With [Prometheus](https://prometheus.io/) exporter configuration:
+```yaml
+logs:
+  prometheus:
+    port: 8080
+    histograms:
+      response_seconds:
+        name: "grpc_response_seconds"
+        help: "gRPC latency distributions."
+        buckets: [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
+      request_bytes:
+        name: "grpc_request_bytes"
+        help: "gRPC request content size distributions."
+        buckets: [1, 2, 4, 8, 16, 32, 64, 128]
+      response_bytes:
+        name: "grpc_response_bytes"
+        help: "gRPC response content size distributions."
+        buckets: [1, 2, 4, 8, 16, 32, 64, 128]
+```
+
+Get gRPC access metrics:
+
+```
+grpc_response_seconds_bucket{method="/eps4g.ping.PingService/Send",status="OK",le="0.001"} 28
+```
+
+Metrics with labels _{{method}}_ and _{{status}}_:
+
+| Metric | Type | Unary (gRPC) | Streaming (gRPC) |
+| --- | --- | --- | --- |
+| response seconds | histogram | o | o |
+| request bytes | histogram | o | x |
+| response bytes | histogram | o | x |
 
 ## Examples
 
