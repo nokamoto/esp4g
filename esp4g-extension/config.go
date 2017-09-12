@@ -1,6 +1,9 @@
 package extension
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
+)
 
 type Histogram struct {
 	Namespace string `yaml:"namespace"`
@@ -39,7 +42,7 @@ type Prometheus struct {
 }
 
 type Logs struct {
-	Logging bool `yaml:"logging"`
+	Zap *zap.Config `yaml:"zap"`
 
 	Prometheus Prometheus `yaml:"prometheus"`
 }

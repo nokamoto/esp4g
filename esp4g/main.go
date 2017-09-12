@@ -13,7 +13,7 @@ func main() {
 		pb        = flag.String("d", "./descriptor.pb", "FileDescriptorSet protocol buffer file")
 		port      = flag.Int("p", 9000, "The gRPC server port")
 		yaml      = flag.String("c", "./config.yaml", "The application config file")
-		extension = flag.String("e", "", "The gRPC extension service address (default: in-process)")
+		extension = flag.String("e", "", "The gRPC extension service address (default in-process)")
 		proxy     = flag.String("u", "localhost:8000", "The gRPC upstream address")
 	)
 

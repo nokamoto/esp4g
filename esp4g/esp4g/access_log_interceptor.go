@@ -6,7 +6,6 @@ import (
 	"time"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
-	"github.com/golang/protobuf/ptypes/duration"
 	proto "github.com/nokamoto/esp4g/protobuf"
 	"github.com/nokamoto/esp4g/esp4g-utils"
 	"io/ioutil"
@@ -17,6 +16,7 @@ import (
 
 type accessLogInterceptor struct {
 	con *grpc.ClientConn
+
 	service *extension.AccessLogService
 }
 
@@ -45,17 +45,10 @@ func newAccessLogInterceptor(address string, fds *descriptor.FileDescriptorSet, 
 	return &accessLogInterceptor{service:extension.NewAccessLogService(config, fds)}
 }
 
-func convert(d time.Duration) *duration.Duration {
-	return &duration.Duration{
-		Seconds: d.Nanoseconds() / time.Second.Nanoseconds(),
-		Nanos: int32(d.Nanoseconds() % time.Second.Nanoseconds()),
-	}
-}
-
 func (a *accessLogInterceptor)doAccessLog(method string, responseTime time.Duration, stat codes.Code, in int, out int) error {
 	unary := proto.UnaryAccessLog{
 		Method: method,
-		ResponseTime: convert(responseTime),
+		ResponseTime: utils.ConvertDuration(responseTime),
 		Status: stat.String(),
 		RequestSize: int64(in),
 		ResponseSize: int64(out),
@@ -78,7 +71,7 @@ func (a *accessLogInterceptor)doAccessLog(method string, responseTime time.Durat
 func (a *accessLogInterceptor)doStreamAccessLog(method string, responseTime time.Duration, stat codes.Code) error {
 	stream := proto.StreamAccessLog{
 		Method: method,
-		ResponseTime: convert(responseTime),
+		ResponseTime: utils.ConvertDuration(responseTime),
 		Status: stat.String(),
 	}
 	var err error

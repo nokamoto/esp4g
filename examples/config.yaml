@@ -1,5 +1,12 @@
 logs:
-  logging: true
+  zap:
+    level: info
+    encoding: json
+    outputPaths:
+      - stdout
+    errorOutputPaths:
+      - stderr
+      
   prometheus:
     port: 8080
     histograms:

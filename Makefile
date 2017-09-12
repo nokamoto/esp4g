@@ -20,6 +20,7 @@ gtest:
 	protoc -I./examples/ping/protobuf --include_imports --include_source_info ./examples/ping/protobuf/service.proto --descriptor_set_out ./esp4g-test/unary-descriptor.pb
 	protoc -I./examples/calc/protobuf --include_imports --include_source_info ./examples/calc/protobuf/service.proto --descriptor_set_out ./esp4g-test/stream-descriptor.pb
 	go test ./esp4g-test
+	go test ./esp4g-utils
 
 install:
 	go install ./examples/ping/esp4g-ping
