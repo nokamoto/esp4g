@@ -9,7 +9,6 @@ import (
 	"testing"
 	calc "github.com/nokamoto/esp4g/examples/calc/protobuf"
 	"time"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
 	"github.com/nokamoto/esp4g/esp4g-extension"
@@ -37,9 +36,7 @@ func newGrpcServer() (*grpc.Server, *PingService, *CalcService) {
 func preflightPing(t *testing.T, con *grpc.ClientConn) {
 	i := 0
 	for i < 10 {
-		client := ping.NewPingServiceClient(con)
-
-		_, err := client.Send(context.Background(), &ping.Ping{})
+		_, err := callPing(con, &ping.Ping{})
 
 		if err == nil {
 			return
@@ -61,23 +58,15 @@ func preflightPing(t *testing.T, con *grpc.ClientConn) {
 func preflightCalc(t *testing.T, con *grpc.ClientConn) {
 	i := 0
 	for i < 10 {
-		client := calc.NewCalcServiceClient(con)
+		_, err := callCalcCStream(con, []*calc.Operand{{}})
 
-		stream, err := client.AddAll(context.Background())
 		if err == nil {
-			err = stream.Send(&calc.Operand{})
-			if err == nil {
-				_, err := stream.CloseAndRecv()
+			return
+		}
 
-				if err == nil {
-					return
-				}
-
-				if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unauthenticated {
-					t.Logf("got unauthenticated error: %s", stat.Message())
-					return
-				}
-			}
+		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unauthenticated {
+			t.Logf("got unauthenticated error: %s", stat.Message())
+			return
 		}
 
 		t.Logf("%d: %v", i, err)
@@ -89,7 +78,7 @@ func preflightCalc(t *testing.T, con *grpc.ClientConn) {
 	t.Error("preflight timed out")
 }
 
-func inproc(descriptor string, config string, c chan error) (*grpc.Server, *grpc.Server) {
+func inproc(t *testing.T, descriptor string, config string, c chan error) (*grpc.Server, *grpc.Server) {
 	proxy := esp4g.NewGrpcServer(
 		descriptor,
 		fmt.Sprintf("localhost:%d", UPSTREAM_PORT),
@@ -97,12 +86,12 @@ func inproc(descriptor string, config string, c chan error) (*grpc.Server, *grpc
 		config,
 	)
 
-	start(proxy, PROXY_PORT, c)
+	start(t, proxy, PROXY_PORT, c)
 
 	return proxy, nil
 }
 
-func outproc(descriptor string, config string, cp chan error, se chan error) (*grpc.Server, *grpc.Server) {
+func outproc(t *testing.T, descriptor string, config string, cp chan error, se chan error) (*grpc.Server, *grpc.Server) {
 	proxy := esp4g.NewGrpcServer(
 		descriptor,
 		fmt.Sprintf("localhost:%d", UPSTREAM_PORT),
@@ -110,21 +99,23 @@ func outproc(descriptor string, config string, cp chan error, se chan error) (*g
 		"",
 	)
 
-	start(proxy, PROXY_PORT, cp)
+	start(t, proxy, PROXY_PORT, cp)
 
 	ext := extension.NewGrpcServer(config, descriptor)
 
-	start(ext, EXTENSION_PORT, se)
+	start(t, ext, EXTENSION_PORT, se)
 
 	return proxy, ext
 }
 
-func start(server *grpc.Server, port int, c chan error) {
+func start(t *testing.T, server *grpc.Server, port int, c chan error) {
 	go func() {
 		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 		if err != nil {
+			t.Logf("listen error: %v", err)
 			c <- err
 		} else {
+			t.Logf("listen %d", port)
 			c <- server.Serve(lis)
 		}
 	}()
@@ -142,7 +133,7 @@ func stop(t *testing.T, server *grpc.Server, c chan error) {
 func run(t *testing.T, f func(*grpc.ClientConn, *PingService, *CalcService)) {
 	upstream := make(chan error, 1)
 	upstreamServer, ps, cs := newGrpcServer()
-	start(upstreamServer, UPSTREAM_PORT, upstream)
+	start(t, upstreamServer, UPSTREAM_PORT, upstream)
 
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
@@ -160,7 +151,7 @@ func run(t *testing.T, f func(*grpc.ClientConn, *PingService, *CalcService)) {
 
 func withServers(t *testing.T, descriptor string, config string, f func(*grpc.ClientConn, *PingService, *CalcService)) {
 	proxy := make(chan error, 1)
-	p, e := inproc(descriptor, config, proxy)
+	p, e := inproc(t, descriptor, config, proxy)
 
 	t.Log("run inproc")
 	run(t, f)
@@ -169,7 +160,7 @@ func withServers(t *testing.T, descriptor string, config string, f func(*grpc.Cl
 
 	proxy = make(chan error, 1)
 	ext := make(chan error, 1)
-	p, e = outproc(descriptor, config, proxy, ext)
+	p, e = outproc(t, descriptor, config, proxy, ext)
 
 	t.Log("run outproc")
 	run(t, f)
