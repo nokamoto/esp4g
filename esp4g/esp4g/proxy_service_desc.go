@@ -59,7 +59,7 @@ func nilOrBool(x *bool) bool {
 }
 
 func createServiceDesc(file *descriptor.FileDescriptorProto, service *descriptor.ServiceDescriptorProto) grpc.ServiceDesc {
-	utils.Logger.Infow("service descriptor", "service", service)
+	utils.Logger.Debugw("service descriptor", "service", service)
 
 	serviceName := fmt.Sprintf("%s.%s", file.GetPackage(), service.GetName())
 
@@ -114,7 +114,7 @@ func createProxyServiceDesc(fds *descriptor.FileDescriptorSet) []grpc.ServiceDes
 	services := make([]grpc.ServiceDesc, 0)
 
 	for _, file := range fds.GetFile() {
-		utils.Logger.Infow("file descriptor", "file", file.GetName())
+		utils.Logger.Debugw("file descriptor", "file", file.GetName())
 
 		for _, service := range file.GetService() {
 			services = append(services, createServiceDesc(file, service))

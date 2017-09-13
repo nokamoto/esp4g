@@ -26,13 +26,13 @@ func expectErrorCode(t *testing.T, err error, code codes.Code) {
 	}
 }
 
-func TestDenyUnregisteredCalls(t *testing.T) {
-	yaml, err := config.FromYamlFile("yaml/deny.yaml")
+func checkDeny(t *testing.T, file string, keys... string) {
+	yaml, err := config.FromYamlFile(file)
 	if err != nil {
 		t.Error(err)
 	}
 
-	withServers(t, UNARY_DESCRIPTOR, yaml, []string{}, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
+	withServers(t, UNARY_DESCRIPTOR, yaml, keys, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
 		preflightPing(t, con)
 
 		_, err := callPing(con, &ping.Ping{X: 100})
@@ -41,7 +41,7 @@ func TestDenyUnregisteredCalls(t *testing.T) {
 		expectErrorCode(t, err, codes.Unauthenticated)
 	})
 
-	withServers(t, STREAM_DESCRIPTOR, yaml, []string{}, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
+	withServers(t, STREAM_DESCRIPTOR, yaml, keys, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
 		preflightCalc(t, con)
 
 		operands, operandList, _, _ := makeTestCase()
@@ -55,18 +55,23 @@ func TestDenyUnregisteredCalls(t *testing.T) {
 			expectErrorCode(t, err, codes.Unauthenticated)
 		}
 
-		_, err = callCalcSStream(con, operandList)
+		sums, err := callCalcSStream(con, operandList)
 
-		t.Log("check server-side stream deny")
+		t.Log("check server-side stream deny", sums)
 		expectErrorCode(t, err, codes.Unauthenticated)
 
-		sums, err := callCalcBStream(con, operands)
+		sums, err = callCalcBStream(con, operands)
 
-		t.Log("check bidirectional stream deny")
+		t.Log("check bidirectional stream deny", sums)
 		if sums == nil && err == io.EOF {
 			t.Logf("hotfix: unexpected state: sums=%v, err=%v", sums, err)
 		} else {
 			expectErrorCode(t, err, codes.Unauthenticated)
 		}
 	})
+}
+
+func TestDenyUnregisteredCalls(t *testing.T) {
+	checkDeny(t, "yaml/deny.yaml")
+	checkDeny(t, "yaml/allow-keys.yaml", "guest2")
 }

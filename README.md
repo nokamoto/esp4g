@@ -18,8 +18,8 @@ Supports:
 - [Access log](#access-log)
   - [with logging](#with-logging)
   - [with prometheus](#with-prometheus)
-- Access control
-  - with API keys
+- [Access control](#access-control)
+  - [with API keys](#with-api-keys)
 
 ## Installing
 ### Using Docker
@@ -167,6 +167,41 @@ Metrics with labels _{{method}}_ and _{{status}}_:
 | request bytes | histogram | o | x |
 | response bytes | histogram | o | x |
 
+### Access control
+#### With API keys
+
+With local yaml configuration:
+
+```
+authentication:
+  providers:
+    - id: local
+      registered_api_keys:
+        - guest
+
+usage:
+  rules:
+    - selector: /eps4g.ping.PingService/Send
+      requirements:
+        - provider_id: local
+```
+
+_/eps4g.ping.PingService/Send_ results `Unauthenticated` as default.
+
+To access the method, it requires `x-api-key` metadata with _registered_api_keys_.
+
+```go
+type PerRPCCredentials struct {}
+
+func (PerRPCCredentials)GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
+	return map[string]string{"x-api-key": "guest"}, nil
+}
+
+...
+
+opts := []grpc.DialOption{grpc.WithInsecure(), grpc.WithPerRPCCredentials(PerRPCCredentials{})}
+```
+
 ## Examples
 
 To run docker-compose, make _descriptor.pb_ files into _examples_ directories.
@@ -269,6 +304,14 @@ logs:
         help: "gRPC response content size distributions."
         buckets: [1, 2, 4, 8, 16, 32, 64, 128]
 
+authentication:
+  providers:
+      # The provider identifier.
+    - id: local
+      # The provider requires 'x-api-key' metadata contains one the following keys.
+      registered_api_keys:
+        - guest
+
 usage:
   # The gRPC access control list.
   # Esp forwards an incoming request to the upstream server only if it satisfies one of the following rules,
@@ -283,10 +326,11 @@ usage:
 
     - selector: "/eps4g.ping.PingService/Send"
 
-      # Esp allows an incoming request if 'x-api-key' metadata contains one of the following keys.
+      # Esp allows an incoming request only if it satisfies all requirements.
       # default: nil
-      registered_api_keys:
-        - guest
+      requirements:
+          # The authentication provider identifier.
+        - provider_id: local
 ```
 
 #### Histogram configuration
