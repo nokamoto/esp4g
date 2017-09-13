@@ -6,7 +6,7 @@ authentication:
 
 usage:
   rules:
-    - selector: /eps4g.ping.PingService/Send
+    - selector: /esp4g.ping.PingService/Send
       requirements:
         - provider_id: local
 

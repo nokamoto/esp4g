@@ -83,7 +83,7 @@ logs:
 
 usage:
   rules:
-    - selector: /eps4g.ping.PingService/Send
+    - selector: /esp4g.ping.PingService/Send
       allow_unregistered_calls: true
 EOF
 ```
@@ -122,7 +122,7 @@ Get gRPC access logs in stdout:
 
 ```json
 {
-  "method":"/eps4g.ping.PingService/Send",
+  "method":"/esp4g.ping.PingService/Send",
   "status":"OK",
   "response_seconds":0.00114802,
   "authority":"localhost:9000",
@@ -156,7 +156,7 @@ logs:
 Get gRPC access metrics:
 
 ```
-grpc_response_seconds_bucket{method="/eps4g.ping.PingService/Send",status="OK",le="0.001"} 28
+grpc_response_seconds_bucket{method="/esp4g.ping.PingService/Send",status="OK",le="0.001"} 28
 ```
 
 Metrics with labels _{{method}}_ and _{{status}}_:
@@ -181,12 +181,12 @@ authentication:
 
 usage:
   rules:
-    - selector: /eps4g.ping.PingService/Send
+    - selector: /esp4g.ping.PingService/Send
       requirements:
         - provider_id: local
 ```
 
-_/eps4g.ping.PingService/Send_ results `Unauthenticated` as default.
+_/esp4g.ping.PingService/Send_ results `Unauthenticated` as default.
 
 To access the method, it requires `x-api-key` metadata with _registered_api_keys_.
 
@@ -324,7 +324,7 @@ usage:
       # default: false
       allow_unregistered_calls: true
 
-    - selector: "/eps4g.ping.PingService/Send"
+    - selector: "/esp4g.ping.PingService/Send"
 
       # Esp allows an incoming request only if it satisfies all requirements.
       # default: nil
