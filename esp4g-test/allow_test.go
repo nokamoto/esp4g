@@ -18,11 +18,11 @@ func checkUnary(t *testing.T, cfg config.ExtensionConfig, apiKeys... string) {
 		if err != nil {
 			t.Error(err)
 		}
-		if *req != *service.lastRequest {
-			t.Errorf("unexpected request: %v %v", req, service.lastRequest)
+		if *req != *service.lastRequest() {
+			t.Errorf("unexpected request: %v %v", req, service.lastRequest())
 		}
-		if *res != *service.lastResponse {
-			t.Errorf("unexpected response: %v %v", res, service.lastResponse)
+		if *res != *service.lastResponse() {
+			t.Errorf("unexpected response: %v %v", res, service.lastResponse())
 		}
 	})
 }
@@ -42,12 +42,12 @@ func checkCStream(t *testing.T, cfg config.ExtensionConfig, apiKeys... string) {
 			t.Errorf("%v != %v", res, expected)
 		}
 
-		if !reflect.DeepEqual(req, service.lastAllRequests) {
-			t.Errorf("unexpected request: %v %v", req, service.lastAllRequests)
+		if !reflect.DeepEqual(req, service.lastAllRequests()) {
+			t.Errorf("unexpected request: %v %v", req, service.lastAllRequests())
 		}
 
-		if *res != *service.lastAllResponse {
-			t.Errorf("unexpected response: %v %v", res, service.lastAllResponse)
+		if *res != *service.lastAllResponse() {
+			t.Errorf("unexpected response: %v %v", res, service.lastAllResponse())
 		}
 	})
 }
@@ -63,12 +63,12 @@ func checkSStream(t *testing.T, cfg config.ExtensionConfig, apiKeys... string) {
 			t.Error(err)
 		}
 
-		if !reflect.DeepEqual(req, service.lastDefferedRequest) {
-			t.Errorf("unexpected request: %v %v", req, service.lastDefferedRequest)
+		if !reflect.DeepEqual(req, service.lastDefferedRequest()) {
+			t.Errorf("unexpected request: %v %v", req, service.lastDefferedRequest())
 		}
 
-		if !reflect.DeepEqual(res, service.lastDefferedResponses) {
-			t.Errorf("unexpected response: %v %v", res, service.lastDefferedResponses)
+		if !reflect.DeepEqual(res, service.lastDefferedResponses()) {
+			t.Errorf("unexpected response: %v %v", res, service.lastDefferedResponses())
 		}
 
 		if !reflect.DeepEqual(res, expected) {
@@ -88,12 +88,12 @@ func checkBStream(t *testing.T, cfg config.ExtensionConfig, apiKeys... string) {
 			t.Error(err)
 		}
 
-		if !reflect.DeepEqual(req, service.lastAsyncRequests) {
-			t.Errorf("unexpected request: %v %v", req, service.lastAsyncRequests)
+		if !reflect.DeepEqual(req, service.lastAsyncRequests()) {
+			t.Errorf("unexpected request: %v %v", req, service.lastAsyncRequests())
 		}
 
-		if !reflect.DeepEqual(res, service.lastAsyncResponses) {
-			t.Errorf("unexpected response: %v %v", res, service.lastAsyncResponses)
+		if !reflect.DeepEqual(res, service.lastAsyncResponses()) {
+			t.Errorf("unexpected response: %v %v", res, service.lastAsyncResponses())
 		}
 
 		if !reflect.DeepEqual(res, expected) {

@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"github.com/nokamoto/esp4g/esp4g-extension"
 	"github.com/nokamoto/esp4g/esp4g-extension/config"
+	"sync"
 )
 
 const UNARY_DESCRIPTOR = "unary-descriptor.pb"
@@ -25,10 +26,10 @@ func newGrpcServer() (*grpc.Server, *PingService, *CalcService) {
 	opts := []grpc.ServerOption{}
 	server := grpc.NewServer(opts...)
 
-	ps := &PingService{}
+	ps := &PingService{mu: &sync.Mutex{}}
 	ping.RegisterPingServiceServer(server, ps)
 
-	cs := &CalcService{}
+	cs := &CalcService{mu: &sync.Mutex{}}
 	calc.RegisterCalcServiceServer(server, cs)
 
 	return server, ps, cs
