@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package esp4g.ping;
 
+import "google/protobuf/empty.proto";
+
 message Ping {
   int64 x = 1;
 }
@@ -14,4 +16,8 @@ service PingService {
   rpc Send(Ping) returns (Pong) {}
 
   rpc Unavailable(Ping) returns (Pong) {}
+}
+
+service HealthCheckService {
+  rpc Check(google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }

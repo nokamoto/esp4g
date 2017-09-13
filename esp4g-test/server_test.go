@@ -9,11 +9,11 @@ import (
 	"testing"
 	calc "github.com/nokamoto/esp4g/examples/calc/protobuf"
 	"time"
-	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/codes"
 	"github.com/nokamoto/esp4g/esp4g-extension"
 	"github.com/nokamoto/esp4g/esp4g-extension/config"
 	"sync"
+	"context"
+	"github.com/golang/protobuf/ptypes/empty"
 )
 
 const UNARY_DESCRIPTOR = "unary-descriptor.pb"
@@ -32,52 +32,48 @@ func newGrpcServer() (*grpc.Server, *PingService, *CalcService) {
 	cs := &CalcService{mu: &sync.Mutex{}}
 	calc.RegisterCalcServiceServer(server, cs)
 
+	ping.RegisterHealthCheckServiceServer(server, HealthCheckService{})
+	calc.RegisterHealthCheckServiceServer(server, HealthCheckService{})
+
 	return server, ps, cs
 }
 
 func preflightPing(t *testing.T, con *grpc.ClientConn) {
 	i := 0
+	client := ping.NewHealthCheckServiceClient(con)
 	for i < 10 {
-		_, err := callPing(con, &ping.Ping{})
+		_, err := client.Check(context.Background(), &empty.Empty{})
 
 		if err == nil {
 			return
 		}
 
-		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unauthenticated {
-			return
-		}
-
-		t.Logf("%d: %v", i, err)
+		t.Logf("%d: %s %v", i, con.GetState(), err)
 
 		time.Sleep(time.Duration(i * 100) * time.Millisecond)
 
 		i = i + 1
 	}
-	t.Error("preflight timed out")
+	t.Error("ping preflight timed out")
 }
 
 func preflightCalc(t *testing.T, con *grpc.ClientConn) {
 	i := 0
+	client := calc.NewHealthCheckServiceClient(con)
 	for i < 10 {
-		_, err := callCalcCStream(con, []*calc.Operand{{}})
+		_, err := client.Check(context.Background(), &empty.Empty{})
 
 		if err == nil {
 			return
 		}
 
-		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unauthenticated {
-			t.Logf("got unauthenticated error: %s", stat.Message())
-			return
-		}
-
-		t.Logf("%d: %v", i, err)
+		t.Logf("%d: %s %v", i, con.GetState(), err)
 
 		time.Sleep(time.Duration(i * 100) * time.Millisecond)
 
 		i = i + 1
 	}
-	t.Error("preflight timed out")
+	t.Error("calc preflight timed out")
 }
 
 func inproc(t *testing.T, descriptor string, cfg config.ExtensionConfig, c chan error) (*grpc.Server, *grpc.Server) {

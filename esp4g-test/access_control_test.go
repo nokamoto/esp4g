@@ -25,8 +25,6 @@ func TestAllowRegisteredApiKeys(t *testing.T) {
 
 	apiKey := "guest"
 
-	t.Log(yaml)
-
 	checkUnary(t, yaml, apiKey)
 	checkCStream(t, yaml, apiKey)
 	checkSStream(t, yaml, apiKey)
