@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
 	"golang.org/x/net/context"
+	"github.com/golang/protobuf/ptypes/empty"
 )
 
 type PingServer struct {}
@@ -21,6 +22,10 @@ func (PingServer)Send(ctx context.Context, req *ping.Ping) (*ping.Pong, error) {
 
 func (PingServer)Unavailable(context.Context, *ping.Ping) (*ping.Pong, error) {
 	return nil, status.Error(codes.Unavailable, "this method always returns unavailable")
+}
+
+func (PingServer)Check(_ context.Context, _ *empty.Empty) (*empty.Empty, error) {
+	return &empty.Empty{}, nil
 }
 
 var (
@@ -41,6 +46,7 @@ func main() {
 	server := grpc.NewServer(opts...)
 
 	ping.RegisterPingServiceServer(server, PingServer{})
+	ping.RegisterHealthCheckServiceServer(server, PingServer{})
 
 	log.Println("start esp4g-ping-server...")
 	server.Serve(lis)

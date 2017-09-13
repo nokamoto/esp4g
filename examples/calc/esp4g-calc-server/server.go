@@ -10,6 +10,8 @@ import (
 	"io"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
+	"golang.org/x/net/context"
+	"github.com/golang/protobuf/ptypes/empty"
 )
 
 type CalcServer struct {}
@@ -61,6 +63,10 @@ func (CalcServer)AddAsync(stream calc.CalcService_AddAsyncServer) error {
 	return nil
 }
 
+func (CalcServer)Check(_ context.Context, _ *empty.Empty) (*empty.Empty, error) {
+	return &empty.Empty{}, nil
+}
+
 var (
 	port = flag.Int("p", 8000, "The gRPC server port")
 )
@@ -79,6 +85,7 @@ func main() {
 	server := grpc.NewServer(opts...)
 
 	calc.RegisterCalcServiceServer(server, CalcServer{})
+	calc.RegisterHealthCheckServiceServer(server, CalcServer{})
 
 	log.Println("start esp4g-calc-server...")
 	server.Serve(lis)

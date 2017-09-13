@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"io"
 	"golang.org/x/net/context"
+	"github.com/golang/protobuf/ptypes/empty"
 )
 
 var (
@@ -16,6 +17,7 @@ var (
 	port = flag.Int("p", 9000, "The gRPC server port")
 	interval = flag.Int("n", 1, "Wait n seconds")
 	apikey = flag.String("k", "guest", "The gRPC request 'x-api-key'")
+	check = flag.Bool("test", false, "Health check only")
 )
 
 type PerRPCCredentials struct {}
@@ -143,16 +145,26 @@ func main() {
 
 	defer con.Close()
 
-	client := calc.NewCalcServiceClient(con)
+	if *check {
+		_, err := calc.NewHealthCheckServiceClient(con).Check(context.Background(), &empty.Empty{})
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		} else {
+			fmt.Println("ok")
+		}
+	} else {
+		client := calc.NewCalcServiceClient(con)
 
-	count := int64(0)
-	for count >= 0 {
-		clientSideStreaming(client, count)
-		serverSideStreaming(client, count)
-		bidirectionalStreaming(client, count)
+		count := int64(0)
+		for count >= 0 {
+			clientSideStreaming(client, count)
+			serverSideStreaming(client, count)
+			bidirectionalStreaming(client, count)
 
-		time.Sleep(time.Duration(*interval) * time.Second)
+			time.Sleep(time.Duration(*interval) * time.Second)
 
-		count = count + 1
+			count = count + 1
+		}
 	}
 }
