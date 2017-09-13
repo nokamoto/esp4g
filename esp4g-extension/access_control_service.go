@@ -17,6 +17,7 @@ type AccessControlService struct {
 func (a *AccessControlService)Access(_ context.Context, id *proto.AccessIdentity) (*proto.AccessControl, error) {
 	policy, err := a.auth.Allow(id)
 	if err != nil {
+		utils.Logger.Errorw("failed to check", "id", id, "err", err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return &proto.AccessControl{Policy: policy}, nil
