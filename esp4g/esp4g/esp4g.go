@@ -3,9 +3,10 @@ package esp4g
 import (
 	"google.golang.org/grpc"
 	"github.com/nokamoto/esp4g/esp4g-utils"
+	"github.com/nokamoto/esp4g/esp4g-extension/config"
 )
 
-func NewGrpcServer(pb string, proxyAddress string, extensionAddress string, yml string) *grpc.Server {
+func NewGrpcServer(pb string, proxyAddress string, extensionAddress string, cfg config.ExtensionConfig) *grpc.Server {
 	fds, err := utils.ReadFileDescriptorSet(pb)
 	if err != nil {
 		utils.Logger.Fatalw("failed to read pb file", "pb", pb, "err", err)
@@ -13,8 +14,8 @@ func NewGrpcServer(pb string, proxyAddress string, extensionAddress string, yml 
 
 	services := createProxyServiceDesc(fds)
 
-	logInterceptor := newAccessLogInterceptor(extensionAddress, fds, yml)
-	controlInterceptor := newAccessControlInterceptor(extensionAddress, fds, yml)
+	logInterceptor := newAccessLogInterceptor(extensionAddress, fds, cfg)
+	controlInterceptor := newAccessControlInterceptor(extensionAddress, fds, cfg)
 
 	opts := []grpc.ServerOption{}
 

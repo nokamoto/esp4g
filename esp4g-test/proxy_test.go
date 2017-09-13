@@ -5,12 +5,11 @@ import (
 	"google.golang.org/grpc"
 	ping "github.com/nokamoto/esp4g/examples/ping/protobuf"
 	"reflect"
+	"github.com/nokamoto/esp4g/esp4g-extension/config"
 )
 
-const PROXY_CONFIG = "proxy.yaml"
-
-func checkUnaryProxy(t *testing.T, config string, apiKeys... string) {
-	withServers(t, UNARY_DESCRIPTOR, config, apiKeys, func(con *grpc.ClientConn, service *PingService, _ *CalcService) {
+func checkUnaryProxy(t *testing.T, cfg config.ExtensionConfig, apiKeys... string) {
+	withServers(t, UNARY_DESCRIPTOR, cfg, apiKeys, func(con *grpc.ClientConn, service *PingService, _ *CalcService) {
 		preflightPing(t, con)
 
 		req := &ping.Ping{X: 100}
@@ -28,8 +27,8 @@ func checkUnaryProxy(t *testing.T, config string, apiKeys... string) {
 	})
 }
 
-func checkClientSideStream(t *testing.T, config string, apiKeys... string) {
-	withServers(t, STREAM_DESCRIPTOR, config, apiKeys, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
+func checkClientSideStream(t *testing.T, cfg config.ExtensionConfig, apiKeys... string) {
+	withServers(t, STREAM_DESCRIPTOR, cfg, apiKeys, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
 		preflightCalc(t, con)
 
 		req, _, expected, _ := makeTestCase()
@@ -53,8 +52,8 @@ func checkClientSideStream(t *testing.T, config string, apiKeys... string) {
 	})
 }
 
-func checkServerSideStream(t *testing.T, config string, apiKeys... string) {
-	withServers(t, STREAM_DESCRIPTOR, config, apiKeys, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
+func checkServerSideStream(t *testing.T, cfg config.ExtensionConfig, apiKeys... string) {
+	withServers(t, STREAM_DESCRIPTOR, cfg, apiKeys, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
 		preflightCalc(t, con)
 
 		_, req, _, expected := makeTestCase()
@@ -78,8 +77,8 @@ func checkServerSideStream(t *testing.T, config string, apiKeys... string) {
 	})
 }
 
-func checkBidirectionalStream(t *testing.T, config string, apiKeys... string) {
-	withServers(t, STREAM_DESCRIPTOR, config, apiKeys, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
+func checkBidirectionalStream(t *testing.T, cfg config.ExtensionConfig, apiKeys... string) {
+	withServers(t, STREAM_DESCRIPTOR, cfg, apiKeys, func(con *grpc.ClientConn, _ *PingService, service *CalcService) {
 		preflightCalc(t, con)
 
 		req, _, _, expected := makeTestCase()
@@ -103,19 +102,14 @@ func checkBidirectionalStream(t *testing.T, config string, apiKeys... string) {
 	})
 }
 
-func TestUnaryProxy(t *testing.T) {
-	checkUnaryProxy(t, PROXY_CONFIG)
-}
-
-func TestClientSideStreamingProxy(t *testing.T) {
-	checkClientSideStream(t, PROXY_CONFIG)
-}
-
-func TestServerSideStreamingProxy(t *testing.T) {
-	checkServerSideStream(t, PROXY_CONFIG)
-}
-
-func TestBidirectionalStreamingProxy(t *testing.T) {
-	checkBidirectionalStream(t, PROXY_CONFIG)
+func TextProxy(t *testing.T) {
+	yaml, err := config.FromYamlFile("yaml/allow.yaml")
+	if err != nil {
+		t.Error(err)
+	}
+	checkUnaryProxy(t, yaml)
+	checkClientSideStream(t, yaml)
+	checkServerSideStream(t, yaml)
+	checkBidirectionalStream(t, yaml)
 }
 

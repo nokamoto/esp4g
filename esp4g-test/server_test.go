@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
 	"github.com/nokamoto/esp4g/esp4g-extension"
+	"github.com/nokamoto/esp4g/esp4g-extension/config"
 )
 
 const UNARY_DESCRIPTOR = "unary-descriptor.pb"
@@ -78,12 +79,12 @@ func preflightCalc(t *testing.T, con *grpc.ClientConn) {
 	t.Error("preflight timed out")
 }
 
-func inproc(t *testing.T, descriptor string, config string, c chan error) (*grpc.Server, *grpc.Server) {
+func inproc(t *testing.T, descriptor string, cfg config.ExtensionConfig, c chan error) (*grpc.Server, *grpc.Server) {
 	proxy := esp4g.NewGrpcServer(
 		descriptor,
 		fmt.Sprintf("localhost:%d", UPSTREAM_PORT),
 		"",
-		config,
+		cfg,
 	)
 
 	start(t, proxy, PROXY_PORT, c)
@@ -91,17 +92,17 @@ func inproc(t *testing.T, descriptor string, config string, c chan error) (*grpc
 	return proxy, nil
 }
 
-func outproc(t *testing.T, descriptor string, config string, cp chan error, se chan error) (*grpc.Server, *grpc.Server) {
+func outproc(t *testing.T, descriptor string, cfg config.ExtensionConfig, cp chan error, se chan error) (*grpc.Server, *grpc.Server) {
 	proxy := esp4g.NewGrpcServer(
 		descriptor,
 		fmt.Sprintf("localhost:%d", UPSTREAM_PORT),
 		fmt.Sprintf("localhost:%d", EXTENSION_PORT),
-		"",
+		cfg,
 	)
 
 	start(t, proxy, PROXY_PORT, cp)
 
-	ext := extension.NewGrpcServer(config, descriptor)
+	ext := extension.NewGrpcServer(cfg, descriptor)
 
 	start(t, ext, EXTENSION_PORT, se)
 
@@ -153,9 +154,9 @@ func run(t *testing.T, apiKeys []string, f func(*grpc.ClientConn, *PingService, 
 	stop(t, upstreamServer, upstream)
 }
 
-func withServers(t *testing.T, descriptor string, config string, apiKeys []string, f func(*grpc.ClientConn, *PingService, *CalcService)) {
+func withServers(t *testing.T, descriptor string, cfg config.ExtensionConfig, apiKeys []string, f func(*grpc.ClientConn, *PingService, *CalcService)) {
 	proxy := make(chan error, 1)
-	p, e := inproc(t, descriptor, config, proxy)
+	p, e := inproc(t, descriptor, cfg, proxy)
 
 	t.Log("run inproc")
 	run(t, apiKeys, f)
@@ -164,7 +165,7 @@ func withServers(t *testing.T, descriptor string, config string, apiKeys []strin
 
 	proxy = make(chan error, 1)
 	ext := make(chan error, 1)
-	p, e = outproc(t, descriptor, config, proxy, ext)
+	p, e = outproc(t, descriptor, cfg, proxy, ext)
 
 	t.Log("run outproc")
 	run(t, apiKeys, f)

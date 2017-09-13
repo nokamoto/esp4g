@@ -1,12 +1,22 @@
 package esp4g_test
 
-import "testing"
+import (
+	"testing"
+	"github.com/nokamoto/esp4g/esp4g-extension/config"
+)
 
 func TestAllowRegisteredApiKeys(t *testing.T) {
-	config := "access_control-allow.yaml"
+	yaml, err := config.FromYamlFile("yaml/allow-keys.yaml")
+	if err != nil {
+		t.Error(err)
+	}
+
 	apiKey := "guest"
-	checkUnaryProxy(t, config, apiKey)
-	checkClientSideStream(t, config, apiKey)
-	checkServerSideStream(t, config, apiKey)
-	checkBidirectionalStream(t, config, apiKey)
+
+	t.Log(yaml)
+
+	checkUnaryProxy(t, yaml, apiKey)
+	checkClientSideStream(t, yaml, apiKey)
+	checkServerSideStream(t, yaml, apiKey)
+	checkBidirectionalStream(t, yaml, apiKey)
 }
