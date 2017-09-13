@@ -1,0 +1,23 @@
+authentication:
+  providers:
+    - id: guest
+      registered_api_keys:
+        - guest
+    - id: admin
+      registered_api_keys:
+        - admin
+
+usage:
+  rules:
+    - selector: /eps4g.ping.PingService/Send
+      allow_unregistered_calls: true
+
+    - selector: /esp4g.calc.CalcService/AddAll
+
+    - selector: /esp4g.calc.CalcService/AddDeffered
+      requirements:
+        - provider_id: guest
+
+    - selector: /esp4g.calc.CalcService/AddAsync
+      requirements:
+        - provider_id: admin
