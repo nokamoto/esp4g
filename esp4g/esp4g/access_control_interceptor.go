@@ -3,7 +3,6 @@ package esp4g
 import (
 	"google.golang.org/grpc"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
 	proto "github.com/nokamoto/esp4g/protobuf"
@@ -46,7 +45,7 @@ func newAccessControlInterceptor(address string, fds *descriptor.FileDescriptorS
 	return &accessControlInterceptor{service: extension.NewAccessControlService(config, fds)}
 }
 
-func (a *accessControlInterceptor)doAccessControl(method string, keys []string) (proto.AccessPolicy, error) {
+func (a *accessControlInterceptor)callAccessControl(method string, keys []string) (proto.AccessPolicy, error) {
 	id := proto.AccessIdentity{
 		Method: method,
 		ApiKey: keys,
@@ -70,28 +69,42 @@ func (a *accessControlInterceptor)doAccessControl(method string, keys []string) 
 	return ctl.Policy, nil
 }
 
+func fetchApiKey(ctx context.Context) ([]string, error) {
+	md, err := getMetadata(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return safeMetadata(md, API_KEY_HEADER), nil
+}
+
+func (a *accessControlInterceptor)accessControl(ctx context.Context, method string) error {
+	apiKey, err := fetchApiKey(ctx)
+	if err != nil {
+		return err
+	}
+
+	policy, err := a.callAccessControl(method, apiKey)
+	if err != nil {
+		utils.Logger.Infow("access control failed", "method", method, "err", err)
+		return status.Error(codes.Unavailable, "proxy server error")
+	}
+
+	if policy == proto.AccessPolicy_ALLOW {
+		return nil
+	}
+
+	return status.Error(codes.Unauthenticated, "access denied")
+}
+
 func (a *accessControlInterceptor)createApiKeyInterceptor(next *grpc.UnaryServerInterceptor) *grpc.UnaryServerInterceptor {
 	f := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		md, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			return nil, status.Error(codes.Internal, "failed to read metadata")
+		if err := a.accessControl(ctx, info.FullMethod); err != nil {
+			return nil, err
 		}
-
-		apiKey, ok := md[API_KEY_HEADER]
-
-		policy, err := a.doAccessControl(info.FullMethod, apiKey)
-		if err != nil {
-			utils.Logger.Infow("access control failed", "err", err)
-			return nil, status.Error(codes.Unavailable, "proxy server error")
+		if next != nil {
+			return (*next)(ctx, req, info, handler)
 		}
-		if policy == proto.AccessPolicy_ALLOW {
-			if next != nil {
-				return (*next)(ctx, req, info, handler)
-			}
-			return handler(ctx, req)
-		}
-
-		return nil, status.Error(codes.Unauthenticated, "unauthenticated request")
+		return handler(ctx, req)
 	}
 
 	i := grpc.UnaryServerInterceptor(f)
@@ -101,26 +114,13 @@ func (a *accessControlInterceptor)createApiKeyInterceptor(next *grpc.UnaryServer
 
 func (a *accessControlInterceptor)createStreamApiKeyInterceptor(next *grpc.StreamServerInterceptor) *grpc.StreamServerInterceptor {
 	f := func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-		md, ok := metadata.FromIncomingContext(ss.Context())
-		if !ok {
-			return status.Error(codes.Internal, "failed to read metadata")
+		if err := a.accessControl(ss.Context(), info.FullMethod); err != nil {
+			return err
 		}
-
-		apiKey, ok := md[API_KEY_HEADER]
-
-		policy, err := a.doAccessControl(info.FullMethod, apiKey)
-		if err != nil {
-			utils.Logger.Infow("access control failed", "err", err)
-			return status.Error(codes.Unavailable, "proxy server error")
+		if next != nil {
+			return (*next)(srv, ss, info, handler)
 		}
-		if policy == proto.AccessPolicy_ALLOW {
-			if next != nil {
-				return (*next)(srv, ss, info, handler)
-			}
-			return handler(srv, ss)
-		}
-
-		return status.Error(codes.Unauthenticated, "unauthenticated request")
+		return handler(srv, ss)
 	}
 
 	i := grpc.StreamServerInterceptor(f)
