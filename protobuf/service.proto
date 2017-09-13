@@ -3,7 +3,7 @@ syntax = "proto3";
 import "google/protobuf/empty.proto";
 import "google/protobuf/duration.proto";
 
-package eps4g.extension;
+package esp4g.extension;
 
 message GrpcAccess {
   string method = 1;

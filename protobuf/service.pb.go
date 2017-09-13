@@ -2,7 +2,7 @@
 // source: protobuf/service.proto
 
 /*
-Package eps4g_extension is a generated protocol buffer package.
+Package esp4g_extension is a generated protocol buffer package.
 
 It is generated from these files:
 	protobuf/service.proto
@@ -14,7 +14,7 @@ It has these top-level messages:
 	AccessIdentity
 	AccessControl
 */
-package eps4g_extension
+package esp4g_extension
 
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
@@ -180,7 +180,7 @@ func (m *AccessIdentity) GetApiKey() []string {
 }
 
 type AccessControl struct {
-	Policy AccessPolicy `protobuf:"varint,1,opt,name=policy,enum=eps4g.extension.AccessPolicy" json:"policy,omitempty"`
+	Policy AccessPolicy `protobuf:"varint,1,opt,name=policy,enum=esp4g.extension.AccessPolicy" json:"policy,omitempty"`
 }
 
 func (m *AccessControl) Reset()                    { *m = AccessControl{} }
@@ -196,12 +196,12 @@ func (m *AccessControl) GetPolicy() AccessPolicy {
 }
 
 func init() {
-	proto.RegisterType((*GrpcAccess)(nil), "eps4g.extension.GrpcAccess")
-	proto.RegisterType((*UnaryAccessLog)(nil), "eps4g.extension.UnaryAccessLog")
-	proto.RegisterType((*StreamAccessLog)(nil), "eps4g.extension.StreamAccessLog")
-	proto.RegisterType((*AccessIdentity)(nil), "eps4g.extension.AccessIdentity")
-	proto.RegisterType((*AccessControl)(nil), "eps4g.extension.AccessControl")
-	proto.RegisterEnum("eps4g.extension.AccessPolicy", AccessPolicy_name, AccessPolicy_value)
+	proto.RegisterType((*GrpcAccess)(nil), "esp4g.extension.GrpcAccess")
+	proto.RegisterType((*UnaryAccessLog)(nil), "esp4g.extension.UnaryAccessLog")
+	proto.RegisterType((*StreamAccessLog)(nil), "esp4g.extension.StreamAccessLog")
+	proto.RegisterType((*AccessIdentity)(nil), "esp4g.extension.AccessIdentity")
+	proto.RegisterType((*AccessControl)(nil), "esp4g.extension.AccessControl")
+	proto.RegisterEnum("esp4g.extension.AccessPolicy", AccessPolicy_name, AccessPolicy_value)
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -229,7 +229,7 @@ func NewAccessLogServiceClient(cc *grpc.ClientConn) AccessLogServiceClient {
 
 func (c *accessLogServiceClient) UnaryAccess(ctx context.Context, in *UnaryAccessLog, opts ...grpc.CallOption) (*google_protobuf.Empty, error) {
 	out := new(google_protobuf.Empty)
-	err := grpc.Invoke(ctx, "/eps4g.extension.AccessLogService/UnaryAccess", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/esp4g.extension.AccessLogService/UnaryAccess", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +238,7 @@ func (c *accessLogServiceClient) UnaryAccess(ctx context.Context, in *UnaryAcces
 
 func (c *accessLogServiceClient) StreamAccess(ctx context.Context, in *StreamAccessLog, opts ...grpc.CallOption) (*google_protobuf.Empty, error) {
 	out := new(google_protobuf.Empty)
-	err := grpc.Invoke(ctx, "/eps4g.extension.AccessLogService/StreamAccess", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/esp4g.extension.AccessLogService/StreamAccess", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +266,7 @@ func _AccessLogService_UnaryAccess_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/eps4g.extension.AccessLogService/UnaryAccess",
+		FullMethod: "/esp4g.extension.AccessLogService/UnaryAccess",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccessLogServiceServer).UnaryAccess(ctx, req.(*UnaryAccessLog))
@@ -284,7 +284,7 @@ func _AccessLogService_StreamAccess_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/eps4g.extension.AccessLogService/StreamAccess",
+		FullMethod: "/esp4g.extension.AccessLogService/StreamAccess",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccessLogServiceServer).StreamAccess(ctx, req.(*StreamAccessLog))
@@ -293,7 +293,7 @@ func _AccessLogService_StreamAccess_Handler(srv interface{}, ctx context.Context
 }
 
 var _AccessLogService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "eps4g.extension.AccessLogService",
+	ServiceName: "esp4g.extension.AccessLogService",
 	HandlerType: (*AccessLogServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -325,7 +325,7 @@ func NewAccessControlServiceClient(cc *grpc.ClientConn) AccessControlServiceClie
 
 func (c *accessControlServiceClient) Access(ctx context.Context, in *AccessIdentity, opts ...grpc.CallOption) (*AccessControl, error) {
 	out := new(AccessControl)
-	err := grpc.Invoke(ctx, "/eps4g.extension.AccessControlService/Access", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/esp4g.extension.AccessControlService/Access", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +352,7 @@ func _AccessControlService_Access_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/eps4g.extension.AccessControlService/Access",
+		FullMethod: "/esp4g.extension.AccessControlService/Access",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AccessControlServiceServer).Access(ctx, req.(*AccessIdentity))
@@ -361,7 +361,7 @@ func _AccessControlService_Access_Handler(srv interface{}, ctx context.Context, 
 }
 
 var _AccessControlService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "eps4g.extension.AccessControlService",
+	ServiceName: "esp4g.extension.AccessControlService",
 	HandlerType: (*AccessControlServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -382,8 +382,8 @@ var fileDescriptor0 = []byte{
 	0x42, 0x28, 0x93, 0x32, 0x78, 0x45, 0x2a, 0x6c, 0xe3, 0xcf, 0x2a, 0x40, 0x29, 0x08, 0xf1, 0x14,
 	0xb9, 0xe9, 0x25, 0xb3, 0x68, 0xe2, 0x60, 0x3b, 0x88, 0xec, 0xeb, 0xf0, 0xc2, 0x57, 0xe0, 0xdb,
 	0xa1, 0xd8, 0x69, 0xd7, 0x3f, 0xea, 0x13, 0x8f, 0x3e, 0xe7, 0xa7, 0xeb, 0xe3, 0x73, 0x0d, 0xdd,
-	0x4c, 0x70, 0xc5, 0x27, 0xf9, 0xb7, 0x13, 0x89, 0xe2, 0x27, 0x8b, 0xd0, 0xd3, 0x02, 0x39, 0xc0,
-	0x4c, 0x3e, 0x8b, 0x3d, 0xfc, 0xa5, 0x30, 0x95, 0x8c, 0xa7, 0xbd, 0xc3, 0x98, 0xf3, 0x78, 0x86,
+	0x4c, 0x70, 0xc5, 0x27, 0xf9, 0xb7, 0x13, 0x89, 0xe2, 0x27, 0x8b, 0xd0, 0xd3, 0x02, 0x39, 0x40,
+	0x99, 0x3d, 0x8b, 0x3d, 0xfc, 0xa5, 0x30, 0x95, 0x8c, 0xa7, 0xbd, 0xc3, 0x98, 0xf3, 0x78, 0x86,
 	0x27, 0x0b, 0x1e, 0x93, 0x4c, 0x15, 0x86, 0xee, 0x1d, 0xaf, 0x9b, 0xd3, 0x5c, 0x50, 0xc5, 0x78,
 	0x6a, 0x7c, 0xf7, 0xaf, 0x05, 0xf0, 0x5a, 0x64, 0xd1, 0x30, 0x8a, 0x50, 0x4a, 0xd2, 0x05, 0x3b,
 	0x41, 0x75, 0xc5, 0xa7, 0x8e, 0xd5, 0xb7, 0x06, 0x8d, 0xa0, 0x3a, 0x95, 0xba, 0x54, 0x54, 0xe5,
@@ -406,5 +406,5 @@ var fileDescriptor0 = []byte{
 	0xb3, 0xd7, 0xdd, 0xf8, 0x0b, 0xe7, 0xe5, 0xe7, 0x76, 0x6b, 0xe4, 0x1d, 0xb4, 0x96, 0x6b, 0x25,
 	0xfd, 0x8d, 0x51, 0x6b, 0xad, 0x6f, 0x9f, 0xe5, 0x47, 0x70, 0x6f, 0xa5, 0x97, 0x79, 0xda, 0x4b,
 	0xb0, 0xb7, 0x06, 0x5d, 0xdd, 0x45, 0xef, 0x78, 0x0b, 0x50, 0x4d, 0x74, 0x6b, 0x13, 0x5b, 0x5f,
-	0x7b, 0xfa, 0x2f, 0x00, 0x00, 0xff, 0xff, 0xda, 0x23, 0x49, 0xb0, 0xd8, 0x03, 0x00, 0x00,
+	0x7b, 0xfa, 0x2f, 0x00, 0x00, 0xff, 0xff, 0xe1, 0x67, 0x15, 0xf5, 0xd8, 0x03, 0x00, 0x00,
 }

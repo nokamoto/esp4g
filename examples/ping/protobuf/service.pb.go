@@ -2,7 +2,7 @@
 // source: examples/ping/protobuf/service.proto
 
 /*
-Package eps4g_ping is a generated protocol buffer package.
+Package esp4g_ping is a generated protocol buffer package.
 
 It is generated from these files:
 	examples/ping/protobuf/service.proto
@@ -11,7 +11,7 @@ It has these top-level messages:
 	Ping
 	Pong
 */
-package eps4g_ping
+package esp4g_ping
 
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
@@ -66,8 +66,8 @@ func (m *Pong) GetY() int64 {
 }
 
 func init() {
-	proto.RegisterType((*Ping)(nil), "eps4g.ping.Ping")
-	proto.RegisterType((*Pong)(nil), "eps4g.ping.Pong")
+	proto.RegisterType((*Ping)(nil), "esp4g.ping.Ping")
+	proto.RegisterType((*Pong)(nil), "esp4g.ping.Pong")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -95,7 +95,7 @@ func NewPingServiceClient(cc *grpc.ClientConn) PingServiceClient {
 
 func (c *pingServiceClient) Send(ctx context.Context, in *Ping, opts ...grpc.CallOption) (*Pong, error) {
 	out := new(Pong)
-	err := grpc.Invoke(ctx, "/eps4g.ping.PingService/Send", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/esp4g.ping.PingService/Send", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (c *pingServiceClient) Send(ctx context.Context, in *Ping, opts ...grpc.Cal
 
 func (c *pingServiceClient) Unavailable(ctx context.Context, in *Ping, opts ...grpc.CallOption) (*Pong, error) {
 	out := new(Pong)
-	err := grpc.Invoke(ctx, "/eps4g.ping.PingService/Unavailable", in, out, c.cc, opts...)
+	err := grpc.Invoke(ctx, "/esp4g.ping.PingService/Unavailable", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func _PingService_Send_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/eps4g.ping.PingService/Send",
+		FullMethod: "/esp4g.ping.PingService/Send",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PingServiceServer).Send(ctx, req.(*Ping))
@@ -150,7 +150,7 @@ func _PingService_Unavailable_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/eps4g.ping.PingService/Unavailable",
+		FullMethod: "/esp4g.ping.PingService/Unavailable",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PingServiceServer).Unavailable(ctx, req.(*Ping))
@@ -159,7 +159,7 @@ func _PingService_Unavailable_Handler(srv interface{}, ctx context.Context, dec 
 }
 
 var _PingService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "eps4g.ping.PingService",
+	ServiceName: "esp4g.ping.PingService",
 	HandlerType: (*PingServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -182,11 +182,11 @@ var fileDescriptor0 = []byte{
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x49, 0xad, 0x48, 0xcc,
 	0x2d, 0xc8, 0x49, 0x2d, 0xd6, 0x2f, 0xc8, 0xcc, 0x4b, 0xd7, 0x2f, 0x28, 0xca, 0x2f, 0xc9, 0x4f,
 	0x2a, 0x4d, 0xd3, 0x2f, 0x4e, 0x2d, 0x2a, 0xcb, 0x4c, 0x4e, 0xd5, 0x03, 0x0b, 0x08, 0x71, 0xa5,
-	0x16, 0x14, 0x9b, 0xa4, 0xeb, 0x81, 0x94, 0x28, 0x89, 0x70, 0xb1, 0x04, 0x64, 0xe6, 0xa5, 0x0b,
+	0x16, 0x17, 0x98, 0xa4, 0xeb, 0x81, 0x94, 0x28, 0x89, 0x70, 0xb1, 0x04, 0x64, 0xe6, 0xa5, 0x0b,
 	0xf1, 0x70, 0x31, 0x56, 0x48, 0x30, 0x2a, 0x30, 0x6a, 0x30, 0x07, 0x31, 0x56, 0x80, 0x45, 0xf3,
 	0x21, 0xa2, 0x95, 0x30, 0xd1, 0x4a, 0xa3, 0x02, 0x2e, 0x6e, 0x90, 0xda, 0x60, 0x88, 0x61, 0x42,
 	0x3a, 0x5c, 0x2c, 0xc1, 0xa9, 0x79, 0x29, 0x42, 0x02, 0x7a, 0x08, 0xf3, 0xf4, 0x40, 0x0a, 0xa4,
 	0x50, 0x45, 0xf2, 0xf3, 0xd2, 0x95, 0x18, 0x84, 0x8c, 0xb9, 0xb8, 0x43, 0xf3, 0x12, 0xcb, 0x12,
 	0x33, 0x73, 0x12, 0x93, 0x72, 0x52, 0x89, 0xd3, 0x94, 0xc4, 0x06, 0x76, 0xb0, 0x31, 0x20, 0x00,
-	0x00, 0xff, 0xff, 0x7a, 0x0e, 0x57, 0x24, 0xd8, 0x00, 0x00, 0x00,
+	0x00, 0xff, 0xff, 0xfc, 0x49, 0xac, 0x96, 0xd8, 0x00, 0x00, 0x00,
 }

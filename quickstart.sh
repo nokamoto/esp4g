@@ -20,7 +20,7 @@ logs:
 
 usage:
   rules:
-    - selector: /eps4g.ping.PingService/Send
+    - selector: /esp4g.ping.PingService/Send
       allow_unregistered_calls: true
 EOF
 

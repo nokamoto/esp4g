@@ -1,6 +1,6 @@
 usage:
   rules:
-    - selector: /eps4g.ping.PingService/Send
+    - selector: /esp4g.ping.PingService/Send
     - selector: /esp4g.calc.CalcService/AddAll
     - selector: /esp4g.calc.CalcService/AddDeffered
     - selector: /esp4g.calc.CalcService/AddAsync

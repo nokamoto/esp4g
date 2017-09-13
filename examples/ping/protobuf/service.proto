@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package eps4g.ping;
+package esp4g.ping;
 
 message Ping {
   int64 x = 1;
