@@ -8,12 +8,17 @@ import (
 	benchmark "github.com/nokamoto/esp4g/examples/benchmark/protobuf"
 	"google.golang.org/grpc"
 	"golang.org/x/net/context"
+	"github.com/golang/protobuf/ptypes/empty"
 )
 
 type UnaryServer struct {}
 
 func (UnaryServer)Send(_ context.Context, unary *benchmark.Unary) (*benchmark.Unary, error) {
 	return unary, nil
+}
+
+func (UnaryServer)Check(_ context.Context, _ *empty.Empty) (*empty.Empty, error) {
+	return &empty.Empty{}, nil
 }
 
 var (
@@ -34,6 +39,7 @@ func main() {
 	server := grpc.NewServer(opts...)
 
 	benchmark.RegisterUnaryServiceServer(server, UnaryServer{})
+	benchmark.RegisterHealthCheckServiceServer(server, UnaryServer{})
 
 	log.Println("start esp4g-benchmark-server...")
 	server.Serve(lis)

@@ -8,6 +8,7 @@ import (
 	ping "github.com/nokamoto/esp4g/examples/ping/protobuf"
 	"time"
 	"golang.org/x/net/context"
+	"github.com/golang/protobuf/ptypes/empty"
 )
 
 var (
@@ -16,6 +17,7 @@ var (
 	interval = flag.Int("n", 1, "Wait n seconds")
 	unavailable = flag.Bool("u", false, "Send ping to Unavailable")
 	apikey = flag.String("k", "guest", "The gRPC request 'x-api-key'")
+	check = flag.Bool("test", false, "Health check only")
 )
 
 type PerRPCCredentials struct {}
@@ -48,20 +50,30 @@ func main() {
 
 	defer con.Close()
 
-	client := ping.NewPingServiceClient(con)
-
-	count := int64(0)
-	for count >= 0 {
-		req := ping.Ping{X: count}
-
-		if res, err := send(client, req); err != nil {
+	if *check {
+		_, err := ping.NewHealthCheckServiceClient(con).Check(context.Background(), &empty.Empty{})
+		if err != nil {
 			fmt.Println(err)
+			os.Exit(1)
 		} else {
-			fmt.Println(res)
+			fmt.Println("ok")
 		}
+	} else {
+		client := ping.NewPingServiceClient(con)
 
-		time.Sleep(time.Duration(*interval) * time.Second)
+		count := int64(0)
+		for count >= 0 {
+			req := ping.Ping{X: count}
 
-		count = count + 1
+			if res, err := send(client, req); err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println(res)
+			}
+
+			time.Sleep(time.Duration(*interval) * time.Second)
+
+			count = count + 1
+		}
 	}
 }

@@ -2,10 +2,16 @@ syntax = "proto3";
 
 package esp4g.benchmark;
 
+import "google/protobuf/empty.proto";
+
 message Unary {
   string text = 1;
 }
 
 service UnaryService {
   rpc Send(Unary) returns (Unary) {}
+}
+
+service HealthCheckService {
+  rpc Check(google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }
