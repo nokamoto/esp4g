@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/nokamoto/esp4g/esp4g-extension"
+	"github.com/nokamoto/esp4g/esp4g-extension/config"
 )
 
 const AUTHORITY_HEADER = ":authority"
@@ -40,12 +41,12 @@ func newAccessLogInterceptor(address string, fds *descriptor.FileDescriptorSet, 
 		utils.Logger.Fatalw("failed to read yaml", "yaml", yml, "err", err)
 	}
 
-	var config extension.Config
-	if err = yaml.Unmarshal(buf, &config); err != nil {
+	var cfg config.ExtensionConfig
+	if err = yaml.Unmarshal(buf, &cfg); err != nil {
 		utils.Logger.Fatalw("failed to unmarshal", "err", err)
 	}
 
-	return &accessLogInterceptor{service:extension.NewAccessLogService(config, fds)}
+	return &accessLogInterceptor{service:extension.NewAccessLogService(cfg, fds)}
 }
 
 func grpcAccess(ctx context.Context, method string, responseTime time.Duration, stat codes.Code) *proto.GrpcAccess {

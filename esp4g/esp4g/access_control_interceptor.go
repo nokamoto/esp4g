@@ -11,6 +11,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"github.com/nokamoto/esp4g/esp4g-extension"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/nokamoto/esp4g/esp4g-extension/config"
 )
 
 const API_KEY_HEADER = "x-api-key"
@@ -37,12 +38,12 @@ func newAccessControlInterceptor(address string, fds *descriptor.FileDescriptorS
 		utils.Logger.Fatalw("failed to read yaml", "yaml", yml, "err", err)
 	}
 
-	var config extension.Config
-	if err = yaml.Unmarshal(buf, &config); err != nil {
+	var cfg config.ExtensionConfig
+	if err = yaml.Unmarshal(buf, &cfg); err != nil {
 		utils.Logger.Fatalw("failed to unmarshal", "err", err)
 	}
 
-	return &accessControlInterceptor{service: extension.NewAccessControlService(config, fds)}
+	return &accessControlInterceptor{service: extension.NewAccessControlService(cfg, fds)}
 }
 
 func (a *accessControlInterceptor)callAccessControl(method string, keys []string) (proto.AccessPolicy, error) {

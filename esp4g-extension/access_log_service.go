@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"strings"
+	"github.com/nokamoto/esp4g/esp4g-extension/config"
 )
 
 type AccessLogService struct {
@@ -81,9 +82,9 @@ func labelNames() []string {
 	return []string{"method", "status"}
 }
 
-func register(h *Histogram, lbs []string) *prometheus.HistogramVec {
+func register(h *config.Histogram, lbs []string) *prometheus.HistogramVec {
 	if h != nil {
-		hv := prometheus.NewHistogramVec(h.histogramOpts(), lbs)
+		hv := prometheus.NewHistogramVec(h.HistogramOpts(), lbs)
 		prometheus.MustRegister(hv)
 		utils.Logger.Infow("register prometheus histogram", "histogram", h)
 		return hv
@@ -91,16 +92,16 @@ func register(h *Histogram, lbs []string) *prometheus.HistogramVec {
 	return nil
 }
 
-func NewAccessLogService(config Config, _ *descriptor.FileDescriptorSet) *AccessLogService {
+func NewAccessLogService(cfg config.ExtensionConfig, _ *descriptor.FileDescriptorSet) *AccessLogService {
 	var sugar *zap.SugaredLogger
 
-	if s, err := sugaredLogger(config); err != nil {
+	if s, err := sugaredLogger(cfg); err != nil {
 		utils.Logger.Fatalw("failed to create zap logger", "err", err)
 	} else {
 		sugar = s
 	}
 
-	c := config.Logs.Prometheus
+	c := cfg.Logs.Prometheus
 	var requestBytes *prometheus.HistogramVec
 	var responseBytes *prometheus.HistogramVec
 	var responseSeconds *prometheus.HistogramVec
