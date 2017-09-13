@@ -54,6 +54,10 @@ func (a *authenticationProviders)Allow(id *proto.AccessIdentity) (proto.AccessPo
 	return proto.AccessPolicy_DENY, nil
 }
 
+func selectorMatch(selector string, method string) bool {
+	return selector == method
+}
+
 func NewAuthenticationProviders(auth config.Authentication, rules []config.Rule, methods []string) (*authenticationProviders, error) {
 	m := map[string][]authenticationProvider{}
 
@@ -64,21 +68,23 @@ func NewAuthenticationProviders(auth config.Authentication, rules []config.Rule,
 
 	for _, method := range methods {
 		for _, rule := range rules {
-			if rule.AllowUnregisteredCalls {
-				m[method] = []authenticationProvider{&allowUnregisteredCallsProvider{}}
-			} else if rule.Requirements != nil {
-				requirements := []authenticationProvider{}
+			if selectorMatch(rule.Selector, method) {
+				if rule.AllowUnregisteredCalls {
+					m[method] = []authenticationProvider{&allowUnregisteredCallsProvider{}}
+				} else if rule.Requirements != nil {
+					requirements := []authenticationProvider{}
 
-				for _, requirement := range *rule.Requirements {
-					if provider, ok := providers[requirement.ProviderId]; !ok {
-						s := fmt.Sprintf("provider-id undefined: rule=%v, requirement=%v", rule, requirement)
-						return nil, errors.New(s)
-					} else {
-						requirements = append(requirements, provider)
+					for _, requirement := range *rule.Requirements {
+						if provider, ok := providers[requirement.ProviderId]; !ok {
+							s := fmt.Sprintf("provider-id undefined: rule=%v, requirement=%v", rule, requirement)
+							return nil, errors.New(s)
+						} else {
+							requirements = append(requirements, provider)
+						}
 					}
-				}
 
-				m[method] = requirements
+					m[method] = requirements
+				}
 			}
 		}
 	}

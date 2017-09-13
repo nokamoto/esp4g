@@ -10,6 +10,7 @@ import (
 	"github.com/nokamoto/esp4g/esp4g-extension/config"
 )
 
+
 func expectErrorCode(t *testing.T, err error, code codes.Code) {
 	if err == nil {
 		t.Error("expected error but actual nil")
@@ -26,13 +27,8 @@ func expectErrorCode(t *testing.T, err error, code codes.Code) {
 	}
 }
 
-func checkDeny(t *testing.T, file string, keys... string) {
-	yaml, err := config.FromYamlFile(file)
-	if err != nil {
-		t.Error(err)
-	}
-
-	withServers(t, UNARY_DESCRIPTOR, yaml, keys, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
+func checkDenyUnary(t *testing.T, cfg config.ExtensionConfig, keys... string) {
+	withServers(t, UNARY_DESCRIPTOR, cfg, keys, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
 		preflightPing(t, con)
 
 		_, err := callPing(con, &ping.Ping{X: 100})
@@ -40,11 +36,13 @@ func checkDeny(t *testing.T, file string, keys... string) {
 		t.Log("check unary deny")
 		expectErrorCode(t, err, codes.Unauthenticated)
 	})
+}
 
-	withServers(t, STREAM_DESCRIPTOR, yaml, keys, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
+func checkDenyCStream(t *testing.T, cfg config.ExtensionConfig, keys... string) {
+	withServers(t, STREAM_DESCRIPTOR, cfg, keys, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
 		preflightCalc(t, con)
 
-		operands, operandList, _, _ := makeTestCase()
+		operands, _, _, _ := makeTestCase()
 
 		sum, err := callCalcCStream(con, operands)
 
@@ -54,13 +52,29 @@ func checkDeny(t *testing.T, file string, keys... string) {
 		} else {
 			expectErrorCode(t, err, codes.Unauthenticated)
 		}
+	})
+}
+
+func checkDenySStream(t *testing.T, cfg config.ExtensionConfig, keys... string) {
+	withServers(t, STREAM_DESCRIPTOR, cfg, keys, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
+		preflightCalc(t, con)
+
+		_, operandList, _, _ := makeTestCase()
 
 		sums, err := callCalcSStream(con, operandList)
 
 		t.Log("check server-side stream deny", sums)
 		expectErrorCode(t, err, codes.Unauthenticated)
+	})
+}
 
-		sums, err = callCalcBStream(con, operands)
+func checkDenyBStream(t *testing.T, cfg config.ExtensionConfig, keys... string) {
+	withServers(t, STREAM_DESCRIPTOR, cfg, keys, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
+		preflightCalc(t, con)
+
+		operands, _, _, _ := makeTestCase()
+
+		sums, err := callCalcBStream(con, operands)
 
 		t.Log("check bidirectional stream deny", sums)
 		if sums == nil && err == io.EOF {
@@ -69,9 +83,4 @@ func checkDeny(t *testing.T, file string, keys... string) {
 			expectErrorCode(t, err, codes.Unauthenticated)
 		}
 	})
-}
-
-func TestDenyUnregisteredCalls(t *testing.T) {
-	checkDeny(t, "yaml/deny.yaml")
-	checkDeny(t, "yaml/allow-keys.yaml", "guest2")
 }
