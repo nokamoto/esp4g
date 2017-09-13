@@ -1,17 +1,23 @@
+authentication:
+  providers:
+    - id: local
+      registered_api_keys:
+        - guest
+
 usage:
   rules:
     - selector: /eps4g.ping.PingService/Send
-      registered_api_keys:
-        - guest
+      requirements:
+        - provider_id: local
 
     - selector: /esp4g.calc.CalcService/AddAll
-      registered_api_keys:
-        - guest
+      requirements:
+        - provider_id: local
 
     - selector: /esp4g.calc.CalcService/AddDeffered
-      registered_api_keys:
-        - guest
+      requirements:
+        - provider_id: local
 
     - selector: /esp4g.calc.CalcService/AddAsync
-      registered_api_keys:
-        - guest
+      requirements:
+        - provider_id: local

@@ -102,7 +102,7 @@ func checkBidirectionalStream(t *testing.T, cfg config.ExtensionConfig, apiKeys.
 	})
 }
 
-func TextProxy(t *testing.T) {
+func TestProxy(t *testing.T) {
 	yaml, err := config.FromYamlFile("yaml/allow.yaml")
 	if err != nil {
 		t.Error(err)
