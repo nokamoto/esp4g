@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
 	"io"
+	"github.com/nokamoto/esp4g/esp4g-extension/config"
 )
 
 func expectErrorCode(t *testing.T, err error, code codes.Code) {
@@ -26,9 +27,12 @@ func expectErrorCode(t *testing.T, err error, code codes.Code) {
 }
 
 func TestDenyUnregisteredCalls(t *testing.T) {
-	config := "access_control-deny.yaml"
+	yaml, err := config.FromYamlFile("yaml/deny.yaml")
+	if err != nil {
+		t.Error(err)
+	}
 
-	withServers(t, UNARY_DESCRIPTOR, config, []string{}, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
+	withServers(t, UNARY_DESCRIPTOR, yaml, []string{}, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
 		preflightPing(t, con)
 
 		_, err := callPing(con, &ping.Ping{X: 100})
@@ -37,7 +41,7 @@ func TestDenyUnregisteredCalls(t *testing.T) {
 		expectErrorCode(t, err, codes.Unauthenticated)
 	})
 
-	withServers(t, STREAM_DESCRIPTOR, config, []string{}, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
+	withServers(t, STREAM_DESCRIPTOR, yaml, []string{}, func(con *grpc.ClientConn, _ *PingService, _ *CalcService) {
 		preflightCalc(t, con)
 
 		operands, operandList, _, _ := makeTestCase()

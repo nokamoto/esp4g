@@ -8,8 +8,6 @@ import (
 	"google.golang.org/grpc/codes"
 	proto "github.com/nokamoto/esp4g/protobuf"
 	"github.com/nokamoto/esp4g/esp4g-utils"
-	"io/ioutil"
-	"gopkg.in/yaml.v2"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/nokamoto/esp4g/esp4g-extension"
 	"github.com/nokamoto/esp4g/esp4g-extension/config"
@@ -24,7 +22,7 @@ type accessLogInterceptor struct {
 	service *extension.AccessLogService
 }
 
-func newAccessLogInterceptor(address string, fds *descriptor.FileDescriptorSet, yml string) *accessLogInterceptor {
+func newAccessLogInterceptor(address string, fds *descriptor.FileDescriptorSet, cfg config.ExtensionConfig) *accessLogInterceptor {
 	if len(address) != 0 {
 		opts := []grpc.DialOption{grpc.WithInsecure()}
 
@@ -35,17 +33,6 @@ func newAccessLogInterceptor(address string, fds *descriptor.FileDescriptorSet, 
 
 		return &accessLogInterceptor{con: con}
 	}
-
-	buf, err := ioutil.ReadFile(yml)
-	if err != nil {
-		utils.Logger.Fatalw("failed to read yaml", "yaml", yml, "err", err)
-	}
-
-	var cfg config.ExtensionConfig
-	if err = yaml.Unmarshal(buf, &cfg); err != nil {
-		utils.Logger.Fatalw("failed to unmarshal", "err", err)
-	}
-
 	return &accessLogInterceptor{service:extension.NewAccessLogService(cfg, fds)}
 }
 

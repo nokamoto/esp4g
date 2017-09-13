@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/nokamoto/esp4g/esp4g/esp4g"
 	"github.com/nokamoto/esp4g/esp4g-utils"
+	"github.com/nokamoto/esp4g/esp4g-extension/config"
 )
 
 func main() {
@@ -26,7 +27,12 @@ func main() {
 		utils.Logger.Infow("listen port", "port", port)
 	}
 
-	server := esp4g.NewGrpcServer(*pb, *proxy, *extension, *yaml)
+	cfg, err := config.FromYamlFile(*yaml)
+	if err != nil {
+		utils.Logger.Fatalw("failed to read yaml", "yaml", yaml, "err", err)
+	}
+
+	server := esp4g.NewGrpcServer(*pb, *proxy, *extension, cfg)
 
 	utils.Logger.Infow("start esp server")
 	server.Serve(lis)
