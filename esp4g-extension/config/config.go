@@ -1,4 +1,4 @@
-package extension
+package config
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
@@ -17,7 +17,7 @@ type Histogram struct {
 	Buckets []float64 `yaml:"buckets"`
 }
 
-func (h Histogram)histogramOpts() prometheus.HistogramOpts {
+func (h Histogram)HistogramOpts() prometheus.HistogramOpts {
 	return prometheus.HistogramOpts {
 		Namespace: h.Namespace,
 		Subsystem: h.Subsystem,
@@ -59,7 +59,7 @@ type Usage struct {
 	Rules []Rule `yaml:"rules"`
 }
 
-type Config struct {
+type ExtensionConfig struct {
 	Logs Logs `yaml:"logs"`
 
 	Usage Usage `yaml:"usage"`

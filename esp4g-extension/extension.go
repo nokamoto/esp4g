@@ -6,6 +6,7 @@ import (
 	"gopkg.in/yaml.v2"
 	proto "github.com/nokamoto/esp4g/protobuf"
 	"github.com/nokamoto/esp4g/esp4g-utils"
+	"github.com/nokamoto/esp4g/esp4g-extension/config"
 )
 
 func NewGrpcServer(yml string, pb string) *grpc.Server {
@@ -19,16 +20,16 @@ func NewGrpcServer(yml string, pb string) *grpc.Server {
 		utils.Logger.Fatalw("failed to read yaml", "yaml", yml, "err", err)
 	}
 
-	var config Config
-	if err = yaml.Unmarshal(buf, &config); err != nil {
+	var cfg config.ExtensionConfig
+	if err = yaml.Unmarshal(buf, &cfg); err != nil {
 		utils.Logger.Fatalw("failed to unmarshal", "err", err)
 	}
 
 	opts := []grpc.ServerOption{}
 	server := grpc.NewServer(opts...)
 
-	proto.RegisterAccessControlServiceServer(server, NewAccessControlService(config, fds))
-	proto.RegisterAccessLogServiceServer(server, NewAccessLogService(config, fds))
+	proto.RegisterAccessControlServiceServer(server, NewAccessControlService(cfg, fds))
+	proto.RegisterAccessLogServiceServer(server, NewAccessLogService(cfg, fds))
 
 	return server
 }

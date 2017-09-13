@@ -4,10 +4,11 @@ import (
 	"golang.org/x/net/context"
 	proto "github.com/nokamoto/esp4g/protobuf"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/nokamoto/esp4g/esp4g-extension/config"
 )
 
 type AccessControlService struct {
-	rules []Rule
+	rules []config.Rule
 }
 
 func (a *AccessControlService)Access(_ context.Context, id *proto.AccessIdentity) (*proto.AccessControl, error) {
@@ -29,6 +30,6 @@ func (a *AccessControlService)Access(_ context.Context, id *proto.AccessIdentity
 	return &proto.AccessControl{Policy: proto.AccessPolicy_DENY}, nil
 }
 
-func NewAccessControlService(config Config, _ *descriptor.FileDescriptorSet) *AccessControlService {
-	return &AccessControlService{rules: config.Usage.Rules}
+func NewAccessControlService(cfg config.ExtensionConfig, _ *descriptor.FileDescriptorSet) *AccessControlService {
+	return &AccessControlService{rules: cfg.Usage.Rules}
 }
