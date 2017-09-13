@@ -14,6 +14,9 @@ import (
 	"github.com/nokamoto/esp4g/esp4g-extension"
 )
 
+const AUTHORITY_HEADER = ":authority"
+const USER_AGENT_HEADER = "user-agent"
+
 type accessLogInterceptor struct {
 	con *grpc.ClientConn
 
@@ -45,13 +48,31 @@ func newAccessLogInterceptor(address string, fds *descriptor.FileDescriptorSet, 
 	return &accessLogInterceptor{service:extension.NewAccessLogService(config, fds)}
 }
 
-func (a *accessLogInterceptor)doAccessLog(method string, responseTime time.Duration, stat codes.Code, in int, out int) error {
-	unary := proto.UnaryAccessLog{
+func grpcAccess(ctx context.Context, method string, responseTime time.Duration, stat codes.Code) *proto.GrpcAccess {
+	authority := []string{}
+	userAgent := []string{}
+
+	if md, err := getMetadata(ctx); err != nil {
+		utils.Logger.Infow("ignore metadata error", "err", err)
+	} else {
+		authority = safeMetadata(md, AUTHORITY_HEADER)
+		userAgent = safeMetadata(md, USER_AGENT_HEADER)
+	}
+
+	return &proto.GrpcAccess{
 		Method: method,
-		ResponseTime: utils.ConvertDuration(responseTime),
+		Authority: authority,
+		UserAgent: userAgent,
 		Status: stat.String(),
-		RequestSize: int64(in),
-		ResponseSize: int64(out),
+		ResponseTime: utils.ConvertDuration(responseTime),
+	}
+}
+
+func (a *accessLogInterceptor)doAccessLog(access *proto.GrpcAccess, in int, out int) error {
+	unary := proto.UnaryAccessLog {
+		Access: access,
+		RequestBytesSize: int64(in),
+		ResponseBytesSize: int64(out),
 	}
 
 	var err error
@@ -68,12 +89,9 @@ func (a *accessLogInterceptor)doAccessLog(method string, responseTime time.Durat
 	return err
 }
 
-func (a *accessLogInterceptor)doStreamAccessLog(method string, responseTime time.Duration, stat codes.Code) error {
-	stream := proto.StreamAccessLog{
-		Method: method,
-		ResponseTime: utils.ConvertDuration(responseTime),
-		Status: stat.String(),
-	}
+func (a *accessLogInterceptor)doStreamAccessLog(access *proto.GrpcAccess) error {
+	stream := proto.StreamAccessLog{Access: access}
+
 	var err error
 
 	if a.con != nil {
@@ -108,8 +126,8 @@ func (a *accessLogInterceptor)createAccessLogInterceptor(next *grpc.UnaryServerI
 			code = stat.Code()
 		}
 
-		inBytes := -1
-		outBytes := -1
+		inBytes := 0
+		outBytes := 0
 		if m, ok := req.(*proxyMessage); ok {
 			inBytes = len(m.bytes)
 		}
@@ -117,7 +135,7 @@ func (a *accessLogInterceptor)createAccessLogInterceptor(next *grpc.UnaryServerI
 			outBytes = len(m.bytes)
 		}
 
-		if skipErr := a.doAccessLog(info.FullMethod, elapsed, code, inBytes, outBytes); skipErr != nil {
+		if skipErr := a.doAccessLog(grpcAccess(ctx, info.FullMethod, elapsed, code), inBytes, outBytes); skipErr != nil {
 			utils.Logger.Infow("access log failed", "err", skipErr)
 		}
 
@@ -147,7 +165,7 @@ func (a *accessLogInterceptor)createStreamAccessLogInterceptor(next *grpc.Stream
 			code = stat.Code()
 		}
 
-		if skipErr := a.doStreamAccessLog(info.FullMethod, elapsed, code); skipErr != nil {
+		if skipErr := a.doStreamAccessLog(grpcAccess(ss.Context(), info.FullMethod, elapsed, code)); skipErr != nil {
 			utils.Logger.Infow("access log failed", "err", skipErr)
 		}
 

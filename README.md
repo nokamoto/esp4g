@@ -121,9 +121,15 @@ logs:
 Get gRPC access logs in stdout:
 
 ```json
-{"method":"/eps4g.ping.PingService/Send","status":"OK","response_seconds":0.00183718,"request_bytes":0,"response_bytes":0}
-{"method":"/eps4g.ping.PingService/Send","status":"OK","response_seconds":0.000421483,"request_bytes":2,"response_bytes":2}
-{"method":"/eps4g.ping.PingService/Send","status":"OK","response_seconds":0.000929316,"request_bytes":2,"response_bytes":2}
+{
+  "method":"/eps4g.ping.PingService/Send",
+  "status":"OK",
+  "response_seconds":0.00114802,
+  "authority":"localhost:9000",
+  "user_agent":"grpc-go/1.6.0-dev",
+  "request_bytes":2,
+  "response_bytes":2
+}
 ```
 
 ## Examples
