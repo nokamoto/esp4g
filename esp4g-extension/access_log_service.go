@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"fmt"
 	"go.uber.org/zap"
+	"strings"
 )
 
 type AccessLogService struct {
@@ -23,49 +24,56 @@ type AccessLogService struct {
 	logger *zap.SugaredLogger
 }
 
-func observer(unary *proto.UnaryAccessLog, vec *prometheus.HistogramVec) prometheus.Observer {
-	return vec.WithLabelValues(unary.GetMethod(), unary.GetStatus())
+func authority(access *proto.GrpcAccess) string {
+	return strings.Join(access.Authority, ",")
 }
 
-func observerStream(stream *proto.StreamAccessLog, vec *prometheus.HistogramVec) prometheus.Observer {
-	return vec.WithLabelValues(stream.GetMethod(), stream.GetStatus())
+func userAgent(access *proto.GrpcAccess) string {
+	return strings.Join(access.UserAgent, ",")
+}
+
+func observer(access *proto.GrpcAccess, vec *prometheus.HistogramVec) prometheus.Observer {
+	return vec.WithLabelValues(access.GetMethod(), access.GetStatus())
+}
+
+func (a *AccessLogService)grpcAccess(access *proto.GrpcAccess, keysAndValues... interface{}) {
+	rt := utils.ConvertProtoDuration(access.GetResponseTime())
+
+	if a.logger != nil {
+		args := []interface{}{
+			"method", access.GetMethod(),
+			"status", access.GetStatus(),
+			"response_seconds", rt.Seconds(),
+			"authority", authority(access),
+			"user_agent", userAgent(access),
+		}
+
+		args = append(args, keysAndValues...)
+
+		a.logger.Infow("", args...)
+	}
+
+	if a.responseSeconds != nil {
+		observer(access, a.responseSeconds).Observe(rt.Seconds())
+	}
 }
 
 func (a *AccessLogService)UnaryAccess(_ context.Context, unary *proto.UnaryAccessLog) (*empty.Empty, error) {
-	rt := utils.ConvertProtoDuration(unary.GetResponseTime())
-	if a.logger != nil {
-		a.logger.Infow("",
-			"method", unary.GetMethod(),
-			"status", unary.GetStatus(),
-			"response_seconds", rt.Seconds(),
-			"request_bytes", unary.GetRequestSize(),
-			"response_bytes", unary.GetResponseSize(),
-		)
-	}
-	if a.responseSeconds != nil {
-		observer(unary, a.responseSeconds).Observe(rt.Seconds())
-	}
+	a.grpcAccess(unary.GetAccess(),
+		"request_bytes", unary.GetRequestBytesSize(),
+		"response_bytes", unary.GetResponseBytesSize(),
+	)
 	if a.requestBytes != nil {
-		observer(unary, a.requestBytes).Observe(float64(unary.GetRequestSize()))
+		observer(unary.GetAccess(), a.requestBytes).Observe(float64(unary.GetRequestBytesSize()))
 	}
 	if a.responseBytes != nil {
-		observer(unary, a.responseBytes).Observe(float64(unary.GetResponseSize()))
+		observer(unary.GetAccess(), a.responseBytes).Observe(float64(unary.GetResponseBytesSize()))
 	}
 	return &empty.Empty{}, nil
 }
 
 func (a *AccessLogService)StreamAccess(_ context.Context, stream *proto.StreamAccessLog) (*empty.Empty, error) {
-	rt := utils.ConvertProtoDuration(stream.GetResponseTime())
-	if a.logger != nil {
-		a.logger.Infow("",
-			"method", stream.GetMethod(),
-			"status", stream.GetStatus(),
-			"response_seconds", rt.Seconds(),
-		)
-	}
-	if a.responseSeconds != nil {
-		observerStream(stream, a.responseSeconds).Observe(rt.Seconds())
-	}
+	a.grpcAccess(stream.GetAccess())
 	return &empty.Empty{}, nil
 }
 

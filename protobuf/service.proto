@@ -5,24 +5,28 @@ import "google/protobuf/duration.proto";
 
 package eps4g.extension;
 
-message UnaryAccessLog {
+message GrpcAccess {
   string method = 1;
 
-  google.protobuf.Duration response_time = 2;
+  string status = 2;
 
-  string status = 3;
+  repeated string authority = 3;
 
-  int64 request_size = 4;
+  repeated string user_agent = 4;
 
-  int64 response_size = 5;
+  google.protobuf.Duration response_time = 5;
+}
+
+message UnaryAccessLog {
+  GrpcAccess access = 1;
+
+  int64 request_bytes_size = 2;
+
+  int64 response_bytes_size = 3;
 }
 
 message StreamAccessLog {
-  string method = 1;
-
-  google.protobuf.Duration response_time = 2;
-
-  string status = 3;
+  GrpcAccess access = 1;
 }
 
 service AccessLogService {
