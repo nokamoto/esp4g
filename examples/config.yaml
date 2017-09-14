@@ -25,6 +25,12 @@ logs:
 
 usage:
   rules:
+    - selector: "/esp4g.ping.HealthCheckService/Check"
+      allow_unregistered_calls: true
+
+    - selector: "/esp4g.calc.HealthCheckService/Check"
+      allow_unregistered_calls: true
+
     - selector: "/esp4g.benchmark.UnaryService/Send"
       allow_unregistered_calls: true
 

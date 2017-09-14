@@ -9,7 +9,7 @@ services:
 
   esp4g:
     image: nokamotohub/esp4g
-    command: -d /descriptor.pb -c config.yaml
+    command: -d /descriptor.pb -c config.yaml -u examples.esp4g:8000
     volumes:
       - "./protobuf/descriptor.pb:/descriptor.pb"
       - "../config.yaml:/config.yaml"
